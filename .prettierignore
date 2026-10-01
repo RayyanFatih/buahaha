@@ -1,0 +1,8 @@
+node_modules
+.next
+.agents
+.codex
+.impeccable
+package-lock.json
+test-results
+playwright-report

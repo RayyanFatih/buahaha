@@ -12,6 +12,13 @@
 
 # testing
 /coverage
+/test-results/
+/playwright-report/
+
+# local assistant tools and review artifacts
+/.agents/
+/.codex/
+/.impeccable/
 
 # next.js
 /.next/
