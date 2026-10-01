@@ -1,28 +1,59 @@
-# buahaha
+﻿# buahaha
 
-Prototipe dashboard internal penjualan dan distribusi buah untuk **Owner** dan **Admin Gudang**. Antarmuka berbahasa Indonesia, Rupiah, satu gudang, dan data contoh yang saling terhubung. Pelanggan memesan melalui WhatsApp/telepon, kemudian staf mencatatnya di dashboard.
+**buahaha** adalah dashboard internal untuk membantu usaha penjualan buah mengelola kegiatan sehari-hari, mulai dari stok dan pesanan hingga pengiriman, pembayaran, dan laporan usaha.
 
-## Menjalankan
+Aplikasi ini dirancang untuk **Owner** dan **Admin Gudang**, dengan antarmuka berbahasa Indonesia yang dapat digunakan melalui desktop, tablet, maupun ponsel.
 
-Gunakan Node.js 22.13+ atau Node.js 24 LTS dan npm. Dari folder proyek:
+## Fitur
+
+| Menu | Fungsi |
+| --- | --- |
+| Ringkasan | Melihat kondisi usaha, pesanan aktif, tagihan, dan stok yang perlu diisi. |
+| Produk & Stok | Mengelola produk, harga, persediaan, serta pencatatan barang masuk, keluar, dan rusak. |
+| Pelanggan | Menyimpan kontak, alamat, dan riwayat pesanan pelanggan. |
+| Pesanan | Membuat pesanan dan memantau prosesnya sampai selesai. |
+| Pengiriman | Mengatur jadwal, petugas, kendaraan, dan pesanan dalam satu perjalanan. |
+| Pembayaran | Mencatat transfer, tunai, COD, verifikasi bukti, dan setoran petugas. |
+| Pengeluaran | Mencatat pembelian buah, bensin, dan biaya operasional. |
+| Retur | Mencatat pengembalian barang beserta bukti, kondisi, dan keputusan pengembalian uang. |
+| Laporan | Melihat penjualan dan hasil usaha per hari atau rentang tanggal, serta mengekspor CSV. |
+
+## Status pengembangan
+
+buahaha saat ini berupa **prototipe interaktif**. Alur operasional sudah dapat dicoba, sementara data disimpan di browser menggunakan `localStorage`.
+
+- Pilihan Owner dan Admin Gudang masih berupa simulasi peran; belum tersedia login pengguna.
+- Data belum tersinkron antarperangkat atau antarbrowser.
+- Penghapusan data browser akan menghapus transaksi lokal. Cadangan JSON dapat diunduh melalui Pengaturan demo; pemulihan melalui antarmuka belum tersedia.
+- Hosting aplikasi tidak memindahkan data dari browser lokal ke server.
+
+Data contoh bertanggal **30 September 2026**. Aktivitas mulai **1 Oktober 2026** dapat diisi dengan transaksi baru; stok dan riwayat September tetap tersedia.
+
+## Teknologi
+
+Next.js, React, TypeScript, Tailwind CSS, Zod, dan Lucide. Pengujian menggunakan Node.js Test Runner melalui `tsx` serta Playwright.
+
+## Menjalankan di komputer
+
+Siapkan Node.js 22.13+ atau Node.js 24 dan npm, lalu jalankan:
 
 ```bash
+git clone https://github.com/RayyanFatih/buahaha.git
+cd buahaha
 npm install
 npm run dev
 ```
 
-Buka **http://localhost:3000**. Bila port tersebut dipakai, gunakan alamat yang dicetak Next.js. Gunakan origin yang sama setiap kali mencoba; `localhost` dan `127.0.0.1` memiliki penyimpanan browser yang berbeda.
+Buka [localhost:3000](http://localhost:3000) di browser. Versi saat ini tidak memerlukan konfigurasi database atau environment variable.
 
-Build dan jalankan versi produksi lokal:
+Untuk menjalankan build produksi secara lokal:
 
 ```bash
 npm run build
 npm start
 ```
 
-Font Geist diunduh saat kompilasi pertama melalui `next/font`. Instalasi dependensi dan build pertama memerlukan akses jaringan. Seluruh transaksi prototipe berjalan di browser; tidak memerlukan database atau kredensial.
-
-## Alur mencoba
+## Mencoba aplikasi
 
 1. **Pelanggan → Tambah pelanggan.** Isi nama, WhatsApp, dan alamat. Detail pelanggan juga menyediakan edit dan riwayat transaksi.
 2. **Pesanan → Buat pesanan.** Pilih pelanggan, buah, jumlah, harga, serta diskon bila diperlukan. Stok tersedia divalidasi dan langsung dicadangkan.
@@ -34,23 +65,12 @@ Font Geist diunduh saat kompilasi pertama melalui `next/font`. Instalasi depende
 8. Buka **Laporan → Harian**, pilih **Tanggal laporan** atau gunakan tombol hari sebelumnya/berikutnya. **Hari ini** dan **Kemarin** memilih satu hari. Untuk membandingkan beberapa hari, pilih **Rentang tanggal** atau **Bulan ini**; tabel **Rincian per hari** menampilkan penjualan, HPP, biaya, dan hasil setelah biaya setiap tanggal. Klik tanggal untuk membuka hasil hari tersebut beserta pesanan sumbernya. **Ekspor CSV** berisi ringkasan dan rincian harian sesuai filter.
 9. Refresh browser untuk memastikan perubahan tetap ada. **Pengaturan demo** menyediakan cadangan JSON dan reset dengan konfirmasi.
 
-## Modul yang tersedia
+## Panduan transaksi
 
-| Modul         | Kemampuan prototipe                                                                                                                                                                     |
-| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Ringkasan     | Metrik dari transaksi, filter periode, pesanan terkini, tindak lanjut, stok rendah, dan perjalanan aktif. Pesanan aktif/piutang menunjukkan semua tanggal dengan label yang eksplisit.  |
-| Produk & Stok | Tambah/edit produk; SKU unik; harga dan satuan; mutasi masuk, keluar manual, rusak; fisik, cadangan, tersedia; pencarian dan filter stok rendah. Riwayat menampilkan 30 mutasi terbaru. |
-| Pelanggan     | Tambah, edit, cari, alamat, catatan, dan riwayat pesanan.                                                                                                                               |
-| Pesanan       | Multi-item, diskon, validasi stok, enam status, detail, pembayaran terpisah, pembatalan sebelum kirim sesuai batas di bawah.                                                            |
-| Pengiriman    | Jadwal, petugas, kendaraan, alamat/rute, beberapa pesanan per perjalanan, mulai/selesai perjalanan, bensin terkait.                                                                     |
-| Pembayaran    | Transfer/tunai/COD, pembayaran sebagian, bukti lokal, verifikasi, penerimaan dan setoran COD terpisah.                                                                                  |
-| Pengeluaran   | Bensin, pembelian buah, biaya operasional, petugas, kendaraan/perjalanan opsional, bukti, filter tanggal.                                                                               |
-| Retur         | Pengajuan per item dengan alasan dan bukti, batas jumlah, kondisi layak jual/rusak, refund, persetujuan/penolakan.                                                                      |
-| Laporan       | Penjualan bersih, HPP, laba kotor, bensin, biaya lain, kerugian nonkas, hasil setelah biaya, CSV.                                                                                       |
+<details>
+<summary>Aturan stok, perhitungan laporan, dan batas fitur</summary>
 
-Desktop, tablet, dan ponsel didukung. Tabel lebar dapat digeser dengan petunjuk saat isinya melampaui lebar panel. Form memakai label eksplisit, dialog native dengan fokus keyboard dan Escape, pesan kesalahan, serta notifikasi simpan.
-
-## Aturan perhitungan demo
+### Aturan perhitungan
 
 - Pesanan baru mencadangkan stok; konfirmasi dan persiapan tidak mengurangi stok fisik. Pengiriman mengurangi stok fisik satu kali dan melepaskan cadangan.
 - Pembatalan melepaskan cadangan. Sesudah pengiriman gunakan retur.
@@ -65,7 +85,7 @@ Data awal bertanggal **30 September 2026**, menghasilkan penjualan Rp4.100.000, 
 
 Saat pembaruan ini pertama dibuka, tanggal transaksi lokal yang melewati 30 September disesuaikan sekali ke 30 September; nilai, stok, pelanggan, dan hubungan transaksi dipertahankan. Salinan asli tersedia melalui ikon **Pengaturan demo** di kanan atas → **Unduh data sebelum penyesuaian tanggal**. Transaksi baru setelah migrasi tetap menggunakan tanggal sebenarnya, termasuk setelah refresh. Reset demo juga menggunakan tanggal 30 September.
 
-## Batas prototipe
+### Batas prototipe
 
 - **Bukan sistem produksi.** Pergantian peran adalah simulasi; tidak ada autentikasi, otorisasi server, database, atau enkripsi data operasional.
 - Data berada di `localStorage` dengan kunci `buahaha.demo.v1`. Penghapusan data browser menghapus transaksi. Cadangan JSON dapat diunduh, tetapi belum ada antarmuka impor/pemulihan. Penggunaan bersama lintas perangkat dan transaksi serentak lintas tab belum didukung secara aman.
@@ -76,36 +96,19 @@ Saat pembaruan ini pertama dibuka, tanggal transaksi lokal yang melewati 30 Sept
 - Tidak ada pajak, konversi satuan, batch/kedaluwarsa, multi-gudang, biaya pembelian tertimbang, approval bertingkat, atau audit trail produksi. Kebijakan keuangan produksi perlu dikonfirmasi.
 - Tidak ada website pelanggan, checkout publik, integrasi WhatsApp, pelacakan GPS, atau notifikasi eksternal.
 
-## Struktur
+</details>
 
-- `src/components/dashboard.tsx`: shell dashboard, modul, formulir, dan panel detail.
-- `src/components/ui/button.tsx`: tombol berpola shadcn/ui berbasis Radix Slot, CVA, dan token khusus buahaha.
-- `src/lib/domain.ts`: tipe, validasi Zod, perintah transaksi, stok, pembayaran, retur, dan laporan murni.
-- `src/lib/demo.ts`: data simulasi dan mutasi stok awal yang direkonsiliasi.
-- `src/lib/store.ts`: akses data lokal, validasi, subscriber, ekspor, dan reset. Lapisan ini dapat diganti dengan adapter API.
-- `src/app/globals.css`: token, layout, responsivitas, fokus, dan status.
-- `PRODUCT.md`: konteks produk dan asumsi operasional.
-- `DESIGN.md` dan `.impeccable/design.json`: sistem desain dari implementasi.
-
-## Pemeriksaan
+## Pengujian
 
 ```bash
 npm run lint
 npm run typecheck
 npm test
-npm run build
 ```
 
-Pengujian browser memakai Google Chrome yang sudah terpasang, Playwright, dan server di `http://127.0.0.1:3000`:
+Untuk pengujian browser, siapkan Google Chrome dan jalankan server lokal di `http://127.0.0.1:3000`, lalu jalankan `npm run test:e2e` di terminal lain.
 
-```bash
-npm run dev -- --hostname 127.0.0.1
-# Di terminal lain:
-npm run test:e2e
-```
+## Dokumentasi
 
-Uji domain memeriksa rekonsiliasi stok demo, overbooking, pembatalan, pengiriman, pembayaran transfer, COD, retur, perhitungan laba, dan pembatasan peran simulasi. Uji browser mencakup alur utama, refresh, ekspor, bukti transfer, retur, reset, data rusak, serta navigasi/responsivitas 390px dan 820px. Bukti visual tersedia di `.impeccable/review/` untuk desktop 1440px, tablet 820px, ponsel 390px, formulir, dan laporan.
-
-## Menuju backend
-
-Tetapkan matriks izin dan kebijakan stok/akuntansi final; petakan entitas ke PostgreSQL/Supabase dan Prisma; pindahkan perintah ke transaksi server dengan penguncian stok serta idempotensi; gunakan Supabase Auth dan pemeriksaan izin server; pindahkan bukti ke Supabase Storage dengan batas akses; tambahkan jurnal pembayaran/setoran/refund, audit trail, backup dan migrasi. Jangan memindahkan pemeriksaan UI saja sebagai mekanisme keamanan.
+- [Konteks produk](PRODUCT.md): kebutuhan dan cakupan buahaha.
+- [Panduan desain](DESIGN.md): aturan tampilan dan komponen antarmuka.
