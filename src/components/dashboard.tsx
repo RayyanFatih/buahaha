@@ -2478,7 +2478,10 @@ function Editor({
             dijadwalkan. Periksa pelanggan dan alamat sebelum menyimpan.
           </p>
           <details className="shipping-picker">
-            <summary>Pilih pesanan · {selectedOrders.length} dipilih</summary>
+            <summary>
+              <span>Pilih pesanan · {selectedOrders.length} dipilih</span>
+              <ChevronDown size={18} aria-hidden="true" />
+            </summary>
             <div className="shipping-picker-body">
               <Field label="Cari pesanan siap kirim">
                 <input

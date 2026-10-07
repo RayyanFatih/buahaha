@@ -2610,11 +2610,25 @@ td small {
   min-width: 0;
 }
 .shipping-picker summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  list-style: none;
   padding: 14px 16px;
   cursor: pointer;
   color: var(--primary);
   font-weight: 600;
   font-size: 13px;
+}
+.shipping-picker summary::-webkit-details-marker {
+  display: none;
+}
+.shipping-picker summary > svg {
+  flex-shrink: 0;
+}
+.shipping-picker[open] > summary > svg {
+  transform: rotate(180deg);
 }
 .shipping-picker-body {
   padding: 0 16px 16px;
