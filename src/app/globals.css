@@ -631,7 +631,7 @@ th:last-child {
 }
 .orders-list table {
   table-layout: fixed;
-  min-width: 880px;
+  min-width: 960px;
 }
 .orders-list th,
 .orders-list td {
@@ -660,7 +660,7 @@ th:last-child {
 }
 .orders-list th:last-child,
 .orders-list td:last-child {
-  width: 80px;
+  width: 152px;
   padding-left: 12px;
   padding-right: 24px;
   text-align: center;
@@ -766,13 +766,13 @@ th:last-child {
   width: 14%;
 }
 .expenses-table th:nth-child(4) {
-  width: 30%;
+  width: 24%;
 }
 .expenses-table th:nth-child(5) {
   width: 16%;
 }
 .expenses-table th:nth-child(6) {
-  width: 10%;
+  width: 16%;
 }
 .expenses-table .expense-kind {
   align-items: flex-start;
@@ -2668,4 +2668,25 @@ td small {
   margin-top: 4px;
   color: var(--muted);
   line-height: 1.5;
+}
+
+.delete-action {
+  color: #a13c30;
+}
+.delete-action:hover:not(:disabled) {
+  color: #852c22;
+  background: #fbeee9;
+}
+.orders-list .row-actions {
+  justify-content: center;
+  gap: 4px;
+}
+.orders-list td:last-child button {
+  margin-inline: 0;
+}
+.returns-table td:last-child > .delete-action {
+  margin-top: 8px;
+}
+.trip footer {
+  flex-wrap: wrap;
 }

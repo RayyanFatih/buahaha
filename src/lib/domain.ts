@@ -259,6 +259,7 @@ function requireThat(ok: unknown, message: string): asserts ok {
   if (!ok) throw new Error(message);
 }
 export type Command =
+  | { type: "delete"; collection: DeletableCollection; id: string }
   | { type: "customer"; value: Customer }
   | { type: "product"; value: Product }
   | {
@@ -280,6 +281,159 @@ export type Command =
   | { type: "expense"; value: Expense }
   | { type: "return"; value: Return }
   | { type: "returnDecision"; id: string; approve: boolean };
+
+export type DeletableCollection = Exclude<keyof State, "version">;
+
+function undoShipment(s: State, order: Order) {
+  if (!["dikirim", "selesai"].includes(order.status)) return;
+  const movements = s.movements.filter(
+    (m) => m.type === "Keluar" && m.note === order.id,
+  );
+  requireThat(
+    movements.length === order.items.length &&
+      order.items.every((item) =>
+        movements.some(
+          (m) =>
+            m.productId === item.productId &&
+            m.qty === item.qty &&
+            m.loss === 0,
+        ),
+      ),
+    "Mutasi pengiriman tidak cocok dengan pesanan. Periksa riwayat stok sebelum menghapus.",
+  );
+  for (const item of order.items) {
+    const product = s.products.find((p) => p.id === item.productId);
+    requireThat(product, "Produk pesanan tidak ditemukan.");
+    product.stock += item.qty;
+  }
+  s.movements = s.movements.filter((m) => !movements.includes(m));
+}
+
+function deleteRecord(s: State, collection: DeletableCollection, id: string) {
+  requireThat(
+    s[collection].some((row) => row.id === id),
+    "Data sudah dihapus atau tidak ditemukan. Muat ulang daftar.",
+  );
+  if (collection === "customers") {
+    requireThat(
+      !s.orders.some((o) => o.customerId === id),
+      "Pelanggan masih memiliki pesanan. Hapus pesanan terkait terlebih dahulu.",
+    );
+    s.customers = s.customers.filter((c) => c.id !== id);
+  }
+  if (collection === "products") {
+    requireThat(
+      !s.orders.some((o) => o.items.some((i) => i.productId === id)) &&
+        !s.returns.some((r) => r.productId === id),
+      "Produk masih digunakan dalam pesanan atau retur. Hapus transaksi terkait terlebih dahulu.",
+    );
+    requireThat(
+      !s.movements.some((m) => m.productId === id) &&
+        s.products.find((p) => p.id === id)!.stock === 0,
+      "Produk masih memiliki stok atau mutasi. Hapus riwayat mutasi terkait terlebih dahulu sampai stok nol.",
+    );
+    s.products = s.products.filter((p) => p.id !== id);
+  }
+  if (collection === "orders") {
+    requireThat(
+      !s.payments.some((p) => p.orderId === id) &&
+        !s.returns.some((r) => r.orderId === id),
+      "Pesanan memiliki pembayaran atau retur. Hapus pembayaran dan retur terkait terlebih dahulu.",
+    );
+    requireThat(
+      !s.trips.some((t) => t.orderIds.includes(id)),
+      "Pesanan masih terhubung ke pengiriman. Hapus perjalanan terkait terlebih dahulu.",
+    );
+    undoShipment(
+      s,
+      s.orders.find((o) => o.id === id)!,
+    );
+    s.orders = s.orders.filter((o) => o.id !== id);
+  }
+  if (collection === "trips") {
+    const trip = s.trips.find((t) => t.id === id)!;
+    requireThat(
+      !s.expenses.some((e) => e.tripId === id),
+      "Perjalanan masih memiliki pengeluaran. Hapus pengeluaran terkait terlebih dahulu.",
+    );
+    requireThat(
+      !s.payments.some((p) => trip.orderIds.includes(p.orderId)) &&
+        !s.returns.some((r) => trip.orderIds.includes(r.orderId)),
+      "Pesanan dalam perjalanan memiliki pembayaran atau retur. Hapus transaksi terkait terlebih dahulu.",
+    );
+    for (const orderId of trip.orderIds) {
+      const order = s.orders.find((o) => o.id === orderId);
+      requireThat(order, "Pesanan perjalanan tidak ditemukan.");
+      undoShipment(s, order);
+      order.status = "disiapkan";
+      delete order.completedAt;
+    }
+    s.trips = s.trips.filter((t) => t.id !== id);
+  }
+  if (collection === "payments") {
+    const payment = s.payments.find((p) => p.id === id)!;
+    const remaining = s.payments
+      .filter((p) => p.id !== id && p.orderId === payment.orderId && p.verified)
+      .reduce((n, p) => n + p.amount, 0);
+    const refunds = s.returns
+      .filter((r) => r.orderId === payment.orderId && r.status !== "Ditolak")
+      .reduce((n, r) => n + r.refund, 0);
+    requireThat(
+      refunds <= remaining,
+      "Pembayaran mendukung refund retur. Hapus retur terkait terlebih dahulu.",
+    );
+    s.payments = s.payments.filter((p) => p.id !== id);
+  }
+  if (collection === "expenses")
+    s.expenses = s.expenses.filter((e) => e.id !== id);
+  if (collection === "returns") {
+    const record = s.returns.find((r) => r.id === id)!;
+    if (record.status === "Disetujui" && record.condition === "Layak jual") {
+      const product = s.products.find((p) => p.id === record.productId);
+      requireThat(
+        product && available(s, product) >= record.qty,
+        "Stok hasil retur sudah dipakai atau dicadangkan. Pulihkan stok tersedia sebelum menghapus retur.",
+      );
+      const movements = s.movements.filter(
+        (m) => m.type === "Retur" && m.note === id,
+      );
+      requireThat(
+        movements.length === 1 &&
+          movements[0].productId === record.productId &&
+          movements[0].qty === record.qty,
+        "Mutasi retur tidak cocok. Periksa riwayat stok sebelum menghapus.",
+      );
+      product.stock -= record.qty;
+      s.movements = s.movements.filter((m) => !movements.includes(m));
+    }
+    s.returns = s.returns.filter((r) => r.id !== id);
+  }
+  if (collection === "movements") {
+    const movement = s.movements.find((m) => m.id === id)!;
+    requireThat(
+      !(
+        movement.type === "Keluar" &&
+        s.orders.some((o) => o.id === movement.note)
+      ) &&
+        !(
+          movement.type === "Retur" &&
+          s.returns.some((r) => r.id === movement.note)
+        ),
+      "Mutasi dibuat oleh pengiriman atau retur. Hapus transaksi sumbernya agar stok dihitung dengan benar.",
+    );
+    const product = s.products.find((p) => p.id === movement.productId);
+    requireThat(product, "Produk mutasi tidak ditemukan.");
+    const change = ["Masuk", "Retur"].includes(movement.type)
+      ? -movement.qty
+      : movement.qty;
+    requireThat(
+      available(s, product) + change >= 0,
+      "Penghapusan akan membuat stok tersedia negatif. Hapus pesanan terkait atau pulihkan stok terlebih dahulu.",
+    );
+    product.stock += change;
+    s.movements = s.movements.filter((m) => m.id !== id);
+  }
+}
 
 function transition(s: State, order: Order, status: Status) {
   const steps = statuses.slice(0, 5);
@@ -338,6 +492,13 @@ export function execute(
   );
   const s = structuredClone(state);
   const c = command;
+  if (c.type === "delete") {
+    requireThat(
+      role === "Owner",
+      "Penghapusan data hanya tersedia untuk Owner.",
+    );
+    deleteRecord(s, c.collection, c.id);
+  }
   if (c.type === "customer") {
     requireThat(
       c.value.name.trim() &&

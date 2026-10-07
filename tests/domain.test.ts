@@ -400,3 +400,155 @@ test("reserved stock cannot be damaged out and simulated warehouse role cannot m
     /Owner/,
   );
 });
+
+test("deletion protects references, automatic stock movements, and Owner permissions atomically", () => {
+  const s = demoState();
+  const snapshot = structuredClone(s);
+  for (const [collection, id] of [
+    ["customers", "c1"],
+    ["products", "p1"],
+    ["orders", "PSN-1001"],
+    ["trips", "JLN-001"],
+    ["movements", "MUT-K0"],
+  ] as const) {
+    assert.throws(() => execute(s, { type: "delete", collection, id }));
+    assert.deepEqual(s, snapshot);
+  }
+  for (const collection of [
+    "customers",
+    "products",
+    "orders",
+    "trips",
+    "payments",
+    "expenses",
+    "returns",
+    "movements",
+  ] as const) {
+    assert.throws(
+      () =>
+        execute(
+          s,
+          { type: "delete", collection, id: s[collection][0].id },
+          "Admin Gudang",
+        ),
+      /Owner/,
+    );
+  }
+});
+
+test("deleting expenses and payments recalculates balances and protects refund funding", () => {
+  const s = demoState();
+  const withoutExpense = execute(s, {
+    type: "delete",
+    collection: "expenses",
+    id: "BIA-001",
+  });
+  assert.equal(
+    report(withoutExpense, date, date).net,
+    report(s, date, date).net + 100000,
+  );
+  assert.throws(
+    () => execute(s, { type: "delete", collection: "payments", id: "BYR-001" }),
+    /refund/,
+  );
+  const withoutReturn = execute(s, {
+    type: "delete",
+    collection: "returns",
+    id: "RTR-001",
+  });
+  const withoutPayment = execute(withoutReturn, {
+    type: "delete",
+    collection: "payments",
+    id: "BYR-001",
+  });
+  assert.equal(paid(withoutPayment, "PSN-1001"), 0);
+  assert.equal(
+    report(withoutPayment, date, date).sales,
+    report(withoutReturn, date, date).sales,
+  );
+  assert.throws(
+    () =>
+      execute(withoutPayment, {
+        type: "delete",
+        collection: "payments",
+        id: "BYR-001",
+      }),
+    /tidak ditemukan/,
+  );
+});
+
+test("deleting an approved resellable return reverses stock, refund, COGS and its movement", () => {
+  const s = demoState();
+  s.returns[0].condition = "Layak jual";
+  const approved = execute(s, {
+    type: "returnDecision",
+    id: "RTR-001",
+    approve: true,
+  });
+  const deleted = execute(approved, {
+    type: "delete",
+    collection: "returns",
+    id: "RTR-001",
+  });
+  assert.equal(deleted.products[0].stock, s.products[0].stock);
+  assert.deepEqual(report(deleted, date, date), report(s, date, date));
+  assert.ok(!deleted.movements.some((m) => m.note === "RTR-001"));
+  const used = structuredClone(approved);
+  used.products[0].stock = reserved(used, "p1");
+  assert.throws(
+    () =>
+      execute(used, { type: "delete", collection: "returns", id: "RTR-001" }),
+    /sudah dipakai/,
+  );
+  assert.equal(used.returns[0].status, "Disetujui");
+});
+
+test("deleting shipment restores physical stock, prepared orders and removes recognized sales", () => {
+  let s = demoState();
+  for (const id of s.returns.map((r) => r.id))
+    s = execute(s, { type: "delete", collection: "returns", id });
+  for (const id of s.payments.map((p) => p.id))
+    s = execute(s, { type: "delete", collection: "payments", id });
+  for (const id of s.expenses.map((e) => e.id))
+    s = execute(s, { type: "delete", collection: "expenses", id });
+  const before = structuredClone(s);
+  s = execute(s, { type: "delete", collection: "trips", id: "JLN-001" });
+  assert.equal(s.products[0].stock, before.products[0].stock + 50);
+  assert.equal(s.products[1].stock, before.products[1].stock + 50);
+  assert.equal(s.orders[0].status, "disiapkan");
+  assert.equal(s.orders[0].completedAt, undefined);
+  assert.equal(report(s, date, date).sales, 0);
+  assert.ok(!s.movements.some((m) => m.note === "PSN-1001"));
+  assert.equal(
+    available(s, s.products[0]),
+    available(before, before.products[0]),
+  );
+});
+
+test("every demo record can be deleted in dependency order, leaving valid empty data", () => {
+  let s = demoState();
+  for (const collection of [
+    "returns",
+    "payments",
+    "expenses",
+    "trips",
+    "orders",
+  ] as const) {
+    for (const id of s[collection].map((row) => row.id))
+      s = execute(s, { type: "delete", collection, id });
+  }
+  // Undo stock losses before removing opening stock.
+  for (const id of s.movements.toReversed().map((row) => row.id))
+    s = execute(s, { type: "delete", collection: "movements", id });
+  for (const collection of ["products", "customers"] as const) {
+    for (const id of s[collection].map((row) => row.id))
+      s = execute(s, { type: "delete", collection, id });
+  }
+  stateSchema.parse(s);
+  assert.ok(
+    Object.entries(s)
+      .filter(([key]) => key !== "version")
+      .every(([, rows]) => Array.isArray(rows) && rows.length === 0),
+  );
+  assert.equal(report(s, date, date).net, 0);
+});

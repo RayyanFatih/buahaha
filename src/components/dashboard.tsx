@@ -35,6 +35,7 @@ import {
   ShieldCheck,
   ShoppingBasket,
   Truck,
+  Trash2,
   Users,
   Wallet,
   X,
@@ -44,6 +45,7 @@ import { PeriodFilter, type PeriodMode } from "@/components/period-filter";
 import {
   available,
   Command,
+  DeletableCollection,
   Customer,
   dateLabel,
   Evidence,
@@ -284,6 +286,7 @@ export default function Dashboard() {
   const [confirmation, setConfirmation] = useState<{
     title: string;
     action: () => void;
+    destructive?: boolean;
   } | null>(null);
   useEffect(() => {
     if (!toast) return;
@@ -346,6 +349,53 @@ export default function Dashboard() {
       </main>
     );
   const owner = role === "Owner";
+  const deleteEffects: Record<DeletableCollection, string> = {
+    products:
+      "Produk hanya dapat dihapus setelah transaksi terkait dan mutasinya dihapus serta stoknya nol.",
+    customers:
+      "Pelanggan hanya dapat dihapus setelah semua pesanannya dihapus.",
+    orders:
+      "Cadangan stok dilepas. Pembayaran, retur, dan pengiriman terkait harus dihapus terlebih dahulu.",
+    trips:
+      "Semua pesanan dalam perjalanan ini kembali berstatus disiapkan. Stok yang sudah dikirim dikembalikan dan penjualan selesai dikeluarkan dari laporan. Hapus biaya, pembayaran, dan retur terkait terlebih dahulu.",
+    payments:
+      "Pembayaran beserta catatan setoran COD dihapus; sisa tagihan dihitung ulang. Tindakan ini tidak mengembalikan uang secara nyata.",
+    expenses:
+      "Biaya ini dikeluarkan dari laporan. Penghapusan pembelian buah tidak mengubah stok fisik.",
+    returns:
+      "Refund dan pengaruhnya pada laporan dibatalkan. Untuk retur layak jual yang disetujui, stok hasil retur juga dikurangi kembali.",
+    movements:
+      "Pengaruh mutasi pada stok dan kerugian dibalik. Mutasi dari pengiriman atau retur harus dihapus melalui transaksi sumbernya.",
+  };
+  const deleteButton = (
+    collection: DeletableCollection,
+    id: string,
+    label = id,
+  ) => (
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      className="delete-action"
+      disabled={!owner}
+      title={owner ? `Hapus ${label}` : "Penghapusan hanya untuk Owner"}
+      aria-label={`Hapus ${label}`}
+      onClick={() =>
+        setConfirmation({
+          title: `Hapus ${label}? ${deleteEffects[collection]} Data yang dihapus tidak dapat dipulihkan melalui aplikasi.`,
+          destructive: true,
+          action: () => {
+            act(
+              { type: "delete", collection, id },
+              `${label} berhasil dihapus.`,
+            );
+          },
+        })
+      }
+    >
+      <Trash2 size={15} aria-hidden="true" /> Hapus
+    </Button>
+  );
   const summary = report(s, from, to);
   const daily = reportByDay(s, from, to);
   const completedOrders = s.orders.filter(
@@ -420,14 +470,17 @@ export default function Dashboard() {
           <Badge>{paymentStatus(s, o)}</Badge>
         </td>
         <td>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={`Lihat ${o.id}`}
-            onClick={() => open("detail", o.id)}
-          >
-            <ChevronRight size={17} />
-          </Button>
+          <div className="row-actions">
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={`Lihat ${o.id}`}
+              onClick={() => open("detail", o.id)}
+            >
+              <ChevronRight size={17} />
+            </Button>
+            {deleteButton("orders", o.id)}
+          </div>
         </td>
       </tr>
     ));
@@ -570,8 +623,6 @@ export default function Dashboard() {
             >
               <Settings2 size={18} />
             </Button>
-            <span className="simulation">Data simulasi</span>
-            <span className="topbar-divider" />
             <label className="role-picker">
               <span className="avatar">{owner ? "OW" : "AG"}</span>
               <span>
@@ -934,7 +985,7 @@ export default function Dashboard() {
                     "Status",
                     "Total",
                     "Pembayaran",
-                    "Detail",
+                    "Tindakan",
                   ]}
                 >
                   {orderRows(orders)}
@@ -1018,6 +1069,7 @@ export default function Dashboard() {
                             >
                               Edit
                             </Button>
+                            {deleteButton("products", p.id, p.name)}
                           </div>
                         </td>
                       </tr>
@@ -1038,6 +1090,7 @@ export default function Dashboard() {
                     "Jenis",
                     "Jumlah",
                     "Keterangan",
+                    "Tindakan",
                   ]}
                 >
                   {s.movements
@@ -1055,6 +1108,7 @@ export default function Dashboard() {
                           {quantity(m.qty)} {product(m.productId).unit}
                         </td>
                         <td>{m.note || "—"}</td>
+                        <td>{deleteButton("movements", m.id)}</td>
                       </tr>
                     ))}
                 </Table>
@@ -1067,7 +1121,13 @@ export default function Dashboard() {
           {section === "Pelanggan" && (
             <section className="panel">
               <Table
-                headings={["Pelanggan", "WhatsApp", "Alamat", "Transaksi", ""]}
+                headings={[
+                  "Pelanggan",
+                  "WhatsApp",
+                  "Alamat",
+                  "Transaksi",
+                  "Tindakan",
+                ]}
               >
                 {s.customers
                   .filter((c) => match(c.name, c.phone, c.address))
@@ -1095,13 +1155,16 @@ export default function Dashboard() {
                         pesanan
                       </td>
                       <td>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => open("customer", c.id)}
-                        >
-                          Detail & edit
-                        </Button>
+                        <div className="row-actions">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => open("customer", c.id)}
+                          >
+                            Detail & edit
+                          </Button>
+                          {deleteButton("customers", c.id, c.name)}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -1163,6 +1226,7 @@ export default function Dashboard() {
                     </div>
                     {t.note && <p className="trip-note">{t.note}</p>}
                     <footer>
+                      {deleteButton("trips", t.id)}
                       {owner && (
                         <Button
                           variant="outline"
@@ -1278,6 +1342,7 @@ export default function Dashboard() {
                         <td>
                           <div className="row-actions">
                             {p.proof && <ProofLink proof={p.proof} />}
+                            {deleteButton("payments", p.id)}
                             {!p.verified && (
                               <>
                                 {!p.proof && (
@@ -1342,7 +1407,7 @@ export default function Dashboard() {
                     "Petugas",
                     "Keterangan / perjalanan",
                     "Nominal",
-                    "Bukti",
+                    "Bukti / tindakan",
                   ]}
                 >
                   {s.expenses
@@ -1375,7 +1440,12 @@ export default function Dashboard() {
                           </small>
                         </td>
                         <td className="numeric">{money(e.amount)}</td>
-                        <td>{e.proof ? <ProofLink proof={e.proof} /> : "—"}</td>
+                        <td>
+                          <div className="row-actions">
+                            {e.proof && <ProofLink proof={e.proof} />}
+                            {deleteButton("expenses", e.id)}
+                          </div>
+                        </td>
                       </tr>
                     ))}
                 </Table>
@@ -1475,6 +1545,7 @@ export default function Dashboard() {
                         {!owner && r.status === "Diajukan" && r.refund > 0 && (
                           <small>Keputusan refund oleh Owner</small>
                         )}
+                        {deleteButton("returns", r.id)}
                       </td>
                     </tr>
                   ))}
@@ -1801,12 +1872,13 @@ export default function Dashboard() {
                 Kembali
               </Button>
               <Button
+                variant={confirmation.destructive ? "destructive" : "default"}
                 onClick={() => {
                   confirmation.action();
                   setConfirmation(null);
                 }}
               >
-                Ya, lanjutkan
+                {confirmation.destructive ? "Ya, hapus" : "Ya, lanjutkan"}
               </Button>
             </div>
           </div>
@@ -1832,6 +1904,14 @@ function OrderDetail({
   cancel: (o: Order) => void;
 }) {
   const o = s.orders.find((o) => o.id === id)!;
+  if (!o)
+    return (
+      <div className="form-body">
+        <p role="status">
+          Pesanan ini sudah dihapus. Tutup panel untuk kembali ke daftar.
+        </p>
+      </div>
+    );
   const c = s.customers.find((c) => c.id === o.customerId)!;
   const trip = s.trips.find((t) => t.orderIds.includes(o.id));
   return (
@@ -2385,6 +2465,13 @@ function Editor({
           </div>
           {items.map((item, n) => {
             const p = s.products.find((p) => p.id === item.productId)!;
+            if (!p)
+              return (
+                <p className="muted" key={n}>
+                  Belum ada produk yang dapat dipesan. Tambahkan produk dan isi
+                  stok melalui menu Produk &amp; Stok terlebih dahulu.
+                </p>
+              );
             const change = (key: string, value: string) =>
               setItems(
                 items.map((i, index) =>
@@ -2546,6 +2633,24 @@ function Editor({
             )}
             {selectedOrders.map((id) => {
               const order = s.orders.find((o) => o.id === id)!;
+              if (!order)
+                return (
+                  <div className="shipping-selected-order" key={id}>
+                    <p>Pesanan {id} sudah dihapus.</p>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        setSelectedOrders(
+                          selectedOrders.filter((value) => value !== id),
+                        )
+                      }
+                    >
+                      Hapus pilihan
+                    </Button>
+                  </div>
+                );
               const person = s.customers.find(
                 (c) => c.id === order.customerId,
               )!;
@@ -2769,7 +2874,10 @@ function Editor({
       <div className="form-actions">
         <Button
           disabled={
-            uploading || (panel.type === "trip" && !selectedOrders.length)
+            uploading ||
+            (panel.type === "trip" && !selectedOrders.length) ||
+            (panel.type === "order" &&
+              (!s.products.length || !s.customers.length))
           }
           type="submit"
         >

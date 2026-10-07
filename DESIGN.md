@@ -180,7 +180,7 @@ Sidebar desktop tetap selebar 232px; area utama mengimbanginya dengan margin kir
 
 Bagian bawah sidebar dikosongkan dari keterangan demo dan slogan. Pengaturan demo tersedia melalui tombol ikon roda gigi berlabel aksesibel di kanan atas; informasi penyimpanan dan cadangan berada di panel pengaturan.
 
-Tabel pada menu Pesanan memakai proporsi kolom tetap, nominal beserta judul Total rata kanan, dan tombol Detail rata tengah. Nama pelanggan panjang membungkus dalam kolomnya. Lebar minimum tabel 880px mempertahankan keterbacaan di tablet dan ponsel melalui gulir horizontal di dalam panel.
+Tabel pada menu Pesanan memakai proporsi kolom tetap, nominal beserta judul Total rata kanan, dan tindakan detail serta hapus dalam satu kelompok. Nama pelanggan panjang membungkus dalam kolomnya. Lebar minimum tabel 960px mempertahankan keterbacaan di tablet dan ponsel melalui gulir horizontal di dalam panel.
 
 Tabel Pembayaran, Pengeluaran, dan Retur mengikuti perataan yang sama: nominal dan judul rata kanan, status serta tindakan rata tengah, dan teks panjang membungkus dalam kolom. Nomor retur dan pesanan ditata dalam dua baris. Lebar minimum 1040px untuk Pembayaran/Retur dan 960px untuk Pengeluaran menjaga ruang tombol dan keterangan; gulir horizontal tetap di dalam panel.
 
@@ -252,3 +252,5 @@ Panel kanan selebar 550px dengan batas maksimum lebar layar dan tinggi 100dvh. H
 - **Don't** mengambil ukuran teks lama yang tertimpa override CSS sebagai token sistem.
 
 Pilihan pesanan pada formulir pengiriman memakai dropdown yang dapat dibuka lewat keyboard, berisi pencarian nomor pesanan, pelanggan, atau alamat serta pilihan beberapa pesanan. Ringkasan pilihan tetap terlihat di luar dropdown untuk pemeriksaan sebelum menyimpan. Hanya pesanan disiapkan yang belum dijadwalkan tersedia untuk dipilih. Pencarian daftar pengiriman juga mencakup nomor pesanan dan pelanggan.
+
+Label Data simulasi di topbar dihapus. Tombol Hapus menggunakan ikon tempat sampah dan teks merah, dikelompokkan bersama tindakan pada daftar. Konfirmasi menjelaskan dampak pada stok, tagihan, atau laporan dan memakai tombol Ya, hapus berwarna merah. Tombol penghapusan nonaktif untuk Admin Gudang; pesan dependensi menjelaskan transaksi yang harus diselesaikan terlebih dahulu. Laporan tetap merupakan hasil perhitungan data sumber, bukan catatan yang dihapus terpisah.

@@ -65,6 +65,16 @@ npm start
 8. Buka **Laporan → Harian**, pilih **Tanggal laporan** atau gunakan tombol hari sebelumnya/berikutnya. **Hari ini** dan **Kemarin** memilih satu hari. Untuk membandingkan beberapa hari, pilih **Rentang tanggal** atau **Bulan ini**; tabel **Rincian per hari** menampilkan penjualan, HPP, biaya, dan hasil setelah biaya setiap tanggal. Klik tanggal untuk membuka hasil hari tersebut beserta pesanan sumbernya. **Ekspor CSV** berisi ringkasan dan rincian harian sesuai filter.
 9. Refresh browser untuk memastikan perubahan tetap ada. **Pengaturan demo** menyediakan cadangan JSON dan reset dengan konfirmasi.
 
+## Menghapus data
+
+Owner dapat memilih **Hapus** pada daftar produk, pelanggan, pesanan, pengiriman, pembayaran, pengeluaran, retur, dan riwayat mutasi. Konfirmasi menampilkan dampak penghapusan; pilih **Kembali** untuk membatalkan. Admin Gudang tidak dapat menghapus data.
+
+Data yang masih digunakan transaksi lain dilindungi. Untuk membersihkan riwayat, hapus retur terlebih dahulu, kemudian pembayaran dan pengeluaran terkait, pengiriman, lalu pesanan. Produk dan pelanggan dapat dihapus setelah tidak memiliki transaksi terkait. Mutasi stok dapat dihapus jika tidak membuat stok tersedia negatif; mutasi otomatis mengikuti penghapusan pengiriman atau retur sumbernya.
+
+Menghapus perjalanan mengembalikan pesanan ke status disiapkan, mengembalikan stok yang sudah dikirim, dan membatalkan pengakuan penjualan terkait. Menghapus retur layak jual yang sudah disetujui mengurangi kembali stok hasil retur. Laporan dan tagihan dihitung ulang dari data yang tersisa. Penghapusan hanya mengubah catatan aplikasi, bukan transaksi uang nyata.
+
+Unduh cadangan melalui Pengaturan demo jika diperlukan. Penghapusan bersifat permanen dalam aplikasi dan tetap berlaku setelah refresh; tidak ada tombol pemulihan.
+
 ## Panduan transaksi
 
 <details>
@@ -91,7 +101,7 @@ Saat pembaruan ini pertama dibuka, tanggal transaksi lokal yang melewati 30 Sept
 - Data berada di `localStorage` dengan kunci `buahaha.demo.v1`. Penghapusan data browser menghapus transaksi. Cadangan JSON dapat diunduh, tetapi belum ada antarmuka impor/pemulihan. Penggunaan bersama lintas perangkat dan transaksi serentak lintas tab belum didukung secara aman.
 - Bukti menerima JPG/PNG/WebP/MP4 hingga **750 KB per berkas**. Batas total mengikuti kuota browser; jika gagal menyimpan, transaksi tidak dianggap berhasil. Bukti bawaan berupa berkas teks yang jelas menyatakan simulasi. Tidak ada unggah server atau pemrosesan pembayaran nyata.
 - Owner mengakses seluruh modul. Admin Gudang mengelola produk, stok, pelanggan, pesanan, pengiriman, dan retur tanpa refund. Keuangan dan keputusan retur dengan refund dibatasi ke Owner dalam simulasi. Ringkasan dan status pembayaran pesanan tetap dapat dilihat kedua peran.
-- Pesanan yang sudah memiliki pembayaran atau perjalanan tidak dapat dibatalkan di demo; belum ada alur pembatalan dengan refund atau pembongkaran perjalanan. Pesanan tersimpan tidak dapat diedit/dihapus; koreksi transaksi belum tersedia. Keputusan retur bersifat final.
+- Pesanan tersimpan belum dapat diedit. Pembatalan pesanan masih mengikuti batas status dan transaksi terkait. Penghapusan oleh Owner merupakan koreksi catatan dengan pemeriksaan dependensi; bukan alur refund uang nyata. Keputusan retur tidak dapat diedit, tetapi catatan retur dapat dihapus sesuai aturan stok.
 - Setoran COD menyimpan akumulasi per pembayaran, belum jurnal setoran bertanggal atau rekonsiliasi kas petugas yang lengkap. Refund dicatat sebagai keputusan demo, tanpa eksekusi transfer.
 - Tidak ada pajak, konversi satuan, batch/kedaluwarsa, multi-gudang, biaya pembelian tertimbang, approval bertingkat, atau audit trail produksi. Kebijakan keuangan produksi perlu dikonfirmasi.
 - Tidak ada website pelanggan, checkout publik, integrasi WhatsApp, pelacakan GPS, atau notifikasi eksternal.
