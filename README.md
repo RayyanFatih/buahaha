@@ -67,7 +67,7 @@ npm start
 
 ## Menghapus data
 
-Owner dapat memilih **Hapus** pada daftar produk, pelanggan, pesanan, pengiriman, pembayaran, pengeluaran, retur, dan riwayat mutasi. Konfirmasi menampilkan dampak penghapusan; pilih **Kembali** untuk membatalkan. Admin Gudang tidak dapat menghapus data.
+Untuk produk, pelanggan, pesanan, dan riwayat mutasi, buka **Edit** lalu pilih **Hapus** di bagian bawah panel. Pada pengiriman, pembayaran, pengeluaran, dan retur, tombol **Hapus** tersedia langsung di daftar. Konfirmasi menampilkan dampak penghapusan; pilih **Kembali** untuk membatalkan. Penghapusan hanya tersedia untuk Owner.
 
 Data yang masih digunakan transaksi lain dilindungi. Untuk membersihkan riwayat, hapus retur terlebih dahulu, kemudian pembayaran dan pengeluaran terkait, pengiriman, lalu pesanan. Produk dan pelanggan dapat dihapus setelah tidak memiliki transaksi terkait. Mutasi stok dapat dihapus jika tidak membuat stok tersedia negatif; mutasi otomatis mengikuti penghapusan pengiriman atau retur sumbernya.
 

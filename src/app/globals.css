@@ -660,7 +660,7 @@ th:last-child {
 }
 .orders-list th:last-child,
 .orders-list td:last-child {
-  width: 152px;
+  width: 100px;
   padding-left: 12px;
   padding-right: 24px;
   text-align: center;
@@ -2672,6 +2672,11 @@ td small {
 
 .delete-action {
   color: #a13c30;
+}
+.panel-delete-actions {
+  margin: 0 28px 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
 }
 .delete-action:hover:not(:disabled) {
   color: #852c22;

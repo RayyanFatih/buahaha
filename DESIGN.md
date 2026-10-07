@@ -180,7 +180,7 @@ Sidebar desktop tetap selebar 232px; area utama mengimbanginya dengan margin kir
 
 Bagian bawah sidebar dikosongkan dari keterangan demo dan slogan. Pengaturan demo tersedia melalui tombol ikon roda gigi berlabel aksesibel di kanan atas; informasi penyimpanan dan cadangan berada di panel pengaturan.
 
-Tabel pada menu Pesanan memakai proporsi kolom tetap, nominal beserta judul Total rata kanan, dan tindakan detail serta hapus dalam satu kelompok. Nama pelanggan panjang membungkus dalam kolomnya. Lebar minimum tabel 960px mempertahankan keterbacaan di tablet dan ponsel melalui gulir horizontal di dalam panel.
+Tabel pada menu Pesanan memakai proporsi kolom tetap, nominal beserta judul Total rata kanan, dan tombol Edit pada kolom tindakan. Nama pelanggan panjang membungkus dalam kolomnya. Lebar minimum tabel 960px mempertahankan keterbacaan di tablet dan ponsel melalui gulir horizontal di dalam panel. Hapus pada Pesanan, Produk & Stok, Pelanggan, dan riwayat mutasi ditempatkan di bagian bawah panel edit, terpisah dari formulir dengan garis tipis.
 
 Tabel Pembayaran, Pengeluaran, dan Retur mengikuti perataan yang sama: nominal dan judul rata kanan, status serta tindakan rata tengah, dan teks panjang membungkus dalam kolom. Nomor retur dan pesanan ditata dalam dua baris. Lebar minimum 1040px untuk Pembayaran/Retur dan 960px untuk Pengeluaran menjaga ruang tombol dan keterangan; gulir horizontal tetap di dalam panel.
 

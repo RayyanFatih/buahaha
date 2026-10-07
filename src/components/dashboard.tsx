@@ -93,7 +93,8 @@ const titles: Record<string, string> = {
   product: "Tambah produk",
   stock: "Catat mutasi stok",
   order: "Buat pesanan",
-  detail: "Detail pesanan",
+  detail: "Edit pesanan",
+  movement: "Edit mutasi stok",
   trip: "Jadwalkan pengiriman",
   payment: "Catat pembayaran",
   expense: "Catat pengeluaran",
@@ -385,10 +386,11 @@ export default function Dashboard() {
           title: `Hapus ${label}? ${deleteEffects[collection]} Data yang dihapus tidak dapat dipulihkan melalui aplikasi.`,
           destructive: true,
           action: () => {
-            act(
+            const deleted = act(
               { type: "delete", collection, id },
               `${label} berhasil dihapus.`,
             );
+            if (deleted && panel?.id === id) setPanel(null);
           },
         })
       }
@@ -472,14 +474,13 @@ export default function Dashboard() {
         <td>
           <div className="row-actions">
             <Button
-              variant="ghost"
-              size="icon"
-              aria-label={`Lihat ${o.id}`}
+              variant="outline"
+              size="sm"
+              aria-label={`Edit ${o.id}`}
               onClick={() => open("detail", o.id)}
             >
-              <ChevronRight size={17} />
+              Edit
             </Button>
-            {deleteButton("orders", o.id)}
           </div>
         </td>
       </tr>
@@ -1069,7 +1070,6 @@ export default function Dashboard() {
                             >
                               Edit
                             </Button>
-                            {deleteButton("products", p.id, p.name)}
                           </div>
                         </td>
                       </tr>
@@ -1108,7 +1108,16 @@ export default function Dashboard() {
                           {quantity(m.qty)} {product(m.productId).unit}
                         </td>
                         <td>{m.note || "—"}</td>
-                        <td>{deleteButton("movements", m.id)}</td>
+                        <td>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            aria-label={`Edit ${m.id}`}
+                            onClick={() => open("movement", m.id)}
+                          >
+                            Edit
+                          </Button>
+                        </td>
                       </tr>
                     ))}
                 </Table>
@@ -1161,9 +1170,8 @@ export default function Dashboard() {
                             size="sm"
                             onClick={() => open("customer", c.id)}
                           >
-                            Detail & edit
+                            Edit
                           </Button>
-                          {deleteButton("customers", c.id, c.name)}
                         </div>
                       </td>
                     </tr>
@@ -1773,7 +1781,7 @@ export default function Dashboard() {
           key={`${panel.type}-${panel.id || "new"}`}
           title={
             panel.type === "customer" && panel.id
-              ? "Detail pelanggan"
+              ? "Edit pelanggan"
               : panel.type === "product" && panel.id
                 ? "Edit produk"
                 : titles[panel.type]
@@ -1796,6 +1804,32 @@ export default function Dashboard() {
                 })
               }
             />
+          ) : panel.type === "movement" ? (
+            <div className="form-body">
+              {(() => {
+                const movement = s.movements.find((m) => m.id === panel.id);
+                if (!movement) return <p>Mutasi ini sudah dihapus.</p>;
+                return (
+                  <>
+                    <h3>{movement.id}</h3>
+                    <p>
+                      {product(movement.productId).name} ·{" "}
+                      {dateLabel(movement.date)}
+                    </p>
+                    <p>
+                      {movement.type} · {quantity(movement.qty)}{" "}
+                      {product(movement.productId).unit}
+                    </p>
+                    <p>{movement.note || "Tanpa keterangan"}</p>
+                    <p className="muted">
+                      Untuk mengoreksi mutasi manual, hapus catatan ini lalu
+                      buat mutasi baru. Mutasi otomatis diperbarui melalui
+                      pengiriman atau retur sumbernya.
+                    </p>
+                  </>
+                );
+              })()}
+            </div>
           ) : panel.type === "settings" ? (
             <div className="form-body">
               <div className="note-box">
@@ -1855,6 +1889,25 @@ export default function Dashboard() {
               }}
             />
           )}
+          {panel.id &&
+            ["detail", "product", "customer", "movement"].includes(
+              panel.type,
+            ) && (
+              <div className="panel-delete-actions">
+                {panel.type === "detail" &&
+                  s.orders.some((o) => o.id === panel.id) &&
+                  deleteButton("orders", panel.id)}
+                {panel.type === "product" &&
+                  s.products.some((p) => p.id === panel.id) &&
+                  deleteButton("products", panel.id, product(panel.id).name)}
+                {panel.type === "customer" &&
+                  s.customers.some((c) => c.id === panel.id) &&
+                  deleteButton("customers", panel.id, customer(panel.id).name)}
+                {panel.type === "movement" &&
+                  s.movements.some((m) => m.id === panel.id) &&
+                  deleteButton("movements", panel.id)}
+              </div>
+            )}
           {actionError && (
             <div className="form-error" role="alert">
               <CircleAlert size={17} />
