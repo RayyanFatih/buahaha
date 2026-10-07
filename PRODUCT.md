@@ -136,3 +136,7 @@ Nama produk: **buahaha**. Bahasa lugas dan mudah dipahami staf operasional. Komi
 ## Accessibility & Inclusion
 
 Sediakan kondisi kosong, error, validasi form, konfirmasi tindakan berisiko, feedback setelah menyimpan, fokus keyboard yang terlihat, dan label form yang jelas. Status harus dapat dipahami tanpa mengandalkan warna saja. Prioritaskan keterbacaan, perbandingan angka, dan penggunaan lintas desktop, tablet, serta ponsel bagi staf yang tidak terlalu teknis.
+
+## Data awal
+
+Aplikasi dimulai dari data kosong tanpa produk, pelanggan, stok, atau transaksi contoh. Pembaruan ini membersihkan data demo lama satu kali per browser dan mempertahankan seluruh data baru setelahnya. Menu Pengaturan demo dihapus. Data contoh dalam kode hanya dipakai sebagai fixture pengujian.

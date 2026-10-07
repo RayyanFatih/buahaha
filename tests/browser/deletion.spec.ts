@@ -1,4 +1,4 @@
-﻿import { test, expect } from "@playwright/test";
+﻿import { test, expect } from "./fixtures";
 
 test("delete lives inside edit panels, confirms, protects references and persists", async ({
   page,
@@ -111,7 +111,7 @@ test("empty data remains usable after removing all records", async ({
 }) => {
   await page.addInitScript(() =>
     localStorage.setItem(
-      "buahaha.demo.v1",
+      "buahaha.data.v2",
       JSON.stringify({
         version: 1,
         products: [],

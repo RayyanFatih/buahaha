@@ -24,10 +24,10 @@ buahaha saat ini berupa **prototipe interaktif**. Alur operasional sudah dapat d
 
 - Pilihan Owner dan Admin Gudang masih berupa simulasi peran; belum tersedia login pengguna.
 - Data belum tersinkron antarperangkat atau antarbrowser.
-- Penghapusan data browser akan menghapus transaksi lokal. Cadangan JSON dapat diunduh melalui Pengaturan demo; pemulihan melalui antarmuka belum tersedia.
+- Penghapusan data browser akan menghapus transaksi lokal. Belum tersedia sinkronisasi atau pemulihan data melalui antarmuka.
 - Hosting aplikasi tidak memindahkan data dari browser lokal ke server.
 
-Data contoh bertanggal **30 September 2026**. Aktivitas mulai **1 Oktober 2026** dapat diisi dengan transaksi baru; stok dan riwayat September tetap tersedia.
+Aplikasi dimulai dengan seluruh daftar kosong. Tambahkan produk, isi stok, dan daftarkan pelanggan sebelum membuat pesanan.
 
 ## Teknologi
 
@@ -55,6 +55,8 @@ npm start
 
 ## Mencoba aplikasi
 
+Mulai dari menu **Produk & Stok**: tambahkan produk dan catat stok masuk. Lalu ikuti alur berikut.
+
 1. **Pelanggan → Tambah pelanggan.** Isi nama, WhatsApp, dan alamat. Detail pelanggan juga menyediakan edit dan riwayat transaksi.
 2. **Pesanan → Buat pesanan.** Pilih pelanggan, buah, jumlah, harga, serta diskon bila diperlukan. Stok tersedia divalidasi dan langsung dicadangkan.
 3. Buka nomor pesanan, pilih **Konfirmasi pesanan**, lalu **Siapkan pesanan**.
@@ -63,7 +65,7 @@ npm start
 6. Di **Pembayaran**, catat transfer, tunai, atau COD. Transfer menunggu verifikasi dan wajib memiliki bukti sebelum diverifikasi. Untuk COD, catat penerimaan pelanggan kemudian **Catat setoran** petugas secara terpisah; setoran sebagian didukung.
 7. Gunakan **Catat bensin** pada perjalanan atau modul **Pengeluaran**. Biaya melekat pada perjalanan, tidak digandakan per pesanan.
 8. Buka **Laporan → Harian**, pilih **Tanggal laporan** atau gunakan tombol hari sebelumnya/berikutnya. **Hari ini** dan **Kemarin** memilih satu hari. Untuk membandingkan beberapa hari, pilih **Rentang tanggal** atau **Bulan ini**; tabel **Rincian per hari** menampilkan penjualan, HPP, biaya, dan hasil setelah biaya setiap tanggal. Klik tanggal untuk membuka hasil hari tersebut beserta pesanan sumbernya. **Ekspor CSV** berisi ringkasan dan rincian harian sesuai filter.
-9. Refresh browser untuk memastikan perubahan tetap ada. **Pengaturan demo** menyediakan cadangan JSON dan reset dengan konfirmasi.
+9. Refresh browser untuk memastikan perubahan tetap tersimpan.
 
 ## Menghapus data
 
@@ -73,7 +75,7 @@ Data yang masih digunakan transaksi lain dilindungi. Untuk membersihkan riwayat,
 
 Menghapus perjalanan mengembalikan pesanan ke status disiapkan, mengembalikan stok yang sudah dikirim, dan membatalkan pengakuan penjualan terkait. Menghapus retur layak jual yang sudah disetujui mengurangi kembali stok hasil retur. Laporan dan tagihan dihitung ulang dari data yang tersisa. Penghapusan hanya mengubah catatan aplikasi, bukan transaksi uang nyata.
 
-Unduh cadangan melalui Pengaturan demo jika diperlukan. Penghapusan bersifat permanen dalam aplikasi dan tetap berlaku setelah refresh; tidak ada tombol pemulihan.
+Penghapusan bersifat permanen dalam aplikasi dan tetap berlaku setelah refresh; tidak ada tombol pemulihan.
 
 ## Panduan transaksi
 
@@ -91,14 +93,13 @@ Unduh cadangan melalui Pengaturan demo jika diperlukan. Penghapusan bersifat per
 - Refund mengurangi penjualan pada tanggal persetujuan retur. Retur layak jual mengembalikan stok dan membalik HPP item; retur rusak tidak membalik HPP atau menambahkan kerugian yang sama lagi. Retur tanpa refund tidak mengurangi tagihan.
 - Rentang tanggal inklusif. Tanggal penyelesaian dan persetujuan retur mengikuti Asia/Jakarta.
 
-Data awal bertanggal **30 September 2026**, menghasilkan penjualan Rp4.100.000, HPP Rp2.980.000, bensin Rp175.000, biaya operasional Rp50.000, kerugian stok Rp44.000, dan hasil setelah biaya Rp851.000. Laporan 1 Oktober dan seterusnya kosong sampai transaksi baru dicatat. Saldo awal stok bukan pembelian kas fiktif.
 
-Saat pembaruan ini pertama dibuka, tanggal transaksi lokal yang melewati 30 September disesuaikan sekali ke 30 September; nilai, stok, pelanggan, dan hubungan transaksi dipertahankan. Salinan asli tersedia melalui ikon **Pengaturan demo** di kanan atas → **Unduh data sebelum penyesuaian tanggal**. Transaksi baru setelah migrasi tetap menggunakan tanggal sebenarnya, termasuk setelah refresh. Reset demo juga menggunakan tanggal 30 September.
+Pembaruan awal kosong menghapus data dan cadangan demo lama pada browser tersebut, lalu memakai penyimpanan baru `buahaha.data.v2`. Pembersihan hanya terjadi saat pertama beralih; transaksi baru tidak dihapus saat refresh. Menu Pengaturan demo dan pemuatan data contoh telah dihapus.
 
 ### Batas prototipe
 
 - **Bukan sistem produksi.** Pergantian peran adalah simulasi; tidak ada autentikasi, otorisasi server, database, atau enkripsi data operasional.
-- Data berada di `localStorage` dengan kunci `buahaha.demo.v1`. Penghapusan data browser menghapus transaksi. Cadangan JSON dapat diunduh, tetapi belum ada antarmuka impor/pemulihan. Penggunaan bersama lintas perangkat dan transaksi serentak lintas tab belum didukung secara aman.
+- Data berada di `localStorage` dengan kunci `buahaha.data.v2`. Penghapusan data browser menghapus transaksi. Penggunaan bersama lintas perangkat dan transaksi serentak lintas tab belum didukung secara aman.
 - Bukti menerima JPG/PNG/WebP/MP4 hingga **750 KB per berkas**. Batas total mengikuti kuota browser; jika gagal menyimpan, transaksi tidak dianggap berhasil. Bukti bawaan berupa berkas teks yang jelas menyatakan simulasi. Tidak ada unggah server atau pemrosesan pembayaran nyata.
 - Owner mengakses seluruh modul. Admin Gudang mengelola produk, stok, pelanggan, pesanan, pengiriman, dan retur tanpa refund. Keuangan dan keputusan retur dengan refund dibatasi ke Owner dalam simulasi. Ringkasan dan status pembayaran pesanan tetap dapat dilihat kedua peran.
 - Pesanan tersimpan belum dapat diedit. Pembatalan pesanan masih mengikuti batas status dan transaksi terkait. Penghapusan oleh Owner merupakan koreksi catatan dengan pemeriksaan dependensi; bukan alur refund uang nyata. Keputusan retur tidak dapat diedit, tetapi catatan retur dapat dihapus sesuai aturan stok.

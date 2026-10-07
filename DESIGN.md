@@ -1,4 +1,4 @@
----
+﻿---
 name: buahaha
 description: Meja kerja distribusi buah yang tenang, terbaca, dan langsung dapat ditindaklanjuti.
 colors:
@@ -178,7 +178,7 @@ Judul halaman menjadi 26px pada lebar ≤900px dan 25px pada ≤700px. Nilai met
 
 Sidebar desktop tetap selebar 232px; area utama mengimbanginya dengan margin kiri. Konten terpusat memiliki lebar maksimum 1720px dan padding dasar 32px 34px 20px. Grid ringkasan desktop memakai `minmax(0, 2.6fr) minmax(300px, 1fr)` dengan jarak 22px. Strip metrik empat kolom dipisahkan garis, bukan empat kartu terpisah.
 
-Bagian bawah sidebar dikosongkan dari keterangan demo dan slogan. Pengaturan demo tersedia melalui tombol ikon roda gigi berlabel aksesibel di kanan atas; informasi penyimpanan dan cadangan berada di panel pengaturan.
+Bagian bawah sidebar dikosongkan dari keterangan demo dan slogan. Menu Pengaturan demo dan tombolnya di kanan atas dihapus. Aplikasi dimulai dari daftar kosong.
 
 Tabel pada menu Pesanan memakai proporsi kolom tetap, nominal beserta judul Total rata kanan, dan tombol Edit pada kolom tindakan. Nama pelanggan panjang membungkus dalam kolomnya. Lebar minimum tabel 960px mempertahankan keterbacaan di tablet dan ponsel melalui gulir horizontal di dalam panel. Hapus pada Pesanan, Produk & Stok, Pelanggan, dan riwayat mutasi ditempatkan di bagian bawah panel edit, terpisah dari formulir dengan garis tipis.
 

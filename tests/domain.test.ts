@@ -552,3 +552,27 @@ test("every demo record can be deleted in dependency order, leaving valid empty 
   );
   assert.equal(report(s, date, date).net, 0);
 });
+
+test("empty-start migration never removes old data if initializing new storage fails", async () => {
+  const { readStoredState, DATA_KEY } =
+    await import("../src/lib/storage-state");
+  const saved = new Map<string, string>([
+    ["buahaha.demo.v1", JSON.stringify(historicalDemo())],
+  ]);
+  const original = saved.get("buahaha.demo.v1");
+  assert.throws(
+    () =>
+      readStoredState({
+        getItem: (key) => saved.get(key) ?? null,
+        setItem: () => {
+          throw new Error("Quota exceeded");
+        },
+        removeItem: (key) => {
+          saved.delete(key);
+        },
+      }),
+    /Quota/,
+  );
+  assert.equal(saved.get("buahaha.demo.v1"), original);
+  assert.equal(saved.has(DATA_KEY), false);
+});

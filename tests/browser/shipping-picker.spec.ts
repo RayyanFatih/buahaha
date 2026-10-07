@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+﻿import { test, expect } from "./fixtures";
 
 test("shipping search keeps selections visible and excludes unavailable orders", async ({ page }) => {
   await page.goto("/");

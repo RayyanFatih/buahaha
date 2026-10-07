@@ -31,7 +31,6 @@ import {
   ReceiptText,
   RotateCcw,
   Search,
-  Settings2,
   ShieldCheck,
   ShoppingBasket,
   Truck,
@@ -66,15 +65,7 @@ import {
   total,
   uid,
 } from "@/lib/domain";
-import {
-  backup,
-  backupHistory,
-  hasHistoryBackup,
-  dispatch,
-  download,
-  resetDemo,
-  useStore,
-} from "@/lib/store";
+import { backup, dispatch, download, resetData, useStore } from "@/lib/store";
 
 const navigation = [
   { label: "Ringkasan", icon: LayoutDashboard },
@@ -99,7 +90,6 @@ const titles: Record<string, string> = {
   payment: "Catat pembayaran",
   expense: "Catat pengeluaran",
   return: "Ajukan retur",
-  settings: "Pengaturan demo",
   proof: "Unggah bukti transfer",
   deposit: "Catat setoran COD",
 };
@@ -332,18 +322,18 @@ export default function Dashboard() {
               onClick={() => {
                 if (
                   window.confirm(
-                    "Reset data lokal? Data lama akan diganti dengan simulasi baru.",
+                    "Hapus data lokal yang tidak dapat dibaca dan mulai dengan data kosong?",
                   )
                 ) {
                   try {
-                    resetDemo();
+                    resetData();
                   } catch (e) {
                     window.alert((e as Error).message);
                   }
                 }
               }}
             >
-              Reset data demo
+              Mulai dengan data kosong
             </Button>
           </>
         )}
@@ -615,15 +605,6 @@ export default function Dashboard() {
             <strong>{section}</strong>
           </div>
           <div className="topbar-right">
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Pengaturan demo"
-              title="Pengaturan demo"
-              onClick={() => open("settings")}
-            >
-              <Settings2 size={18} />
-            </Button>
             <label className="role-picker">
               <span className="avatar">{owner ? "OW" : "AG"}</span>
               <span>
@@ -1829,55 +1810,6 @@ export default function Dashboard() {
                   </>
                 );
               })()}
-            </div>
-          ) : panel.type === "settings" ? (
-            <div className="form-body">
-              <div className="note-box">
-                <strong>Ruang simulasi buahaha</strong>
-                <p>
-                  Data tersimpan hanya di browser ini. Pergantian peran bukan
-                  autentikasi. Bukti tidak dikirim ke server. Jangan gunakan
-                  untuk data operasional nyata.
-                </p>
-              </div>
-              <h3>Cadangan dan data demo</h3>
-              <p className="muted">
-                Unduh salinan JSON sebelum reset. Pemulihan cadangan melalui
-                antarmuka belum tersedia.
-              </p>
-              <Button variant="outline" onClick={backup}>
-                <Download size={16} />
-                Unduh cadangan JSON
-              </Button>
-              {hasHistoryBackup() && (
-                <Button variant="outline" onClick={backupHistory}>
-                  <Download size={16} />
-                  Unduh data sebelum penyesuaian tanggal
-                </Button>
-              )}
-              <Button
-                variant="destructive"
-                disabled={!owner}
-                onClick={() =>
-                  setConfirmation({
-                    title:
-                      "Reset semua data demo? Semua perubahan dan bukti lokal akan diganti dengan data simulasi awal.",
-                    action: () => {
-                      try {
-                        resetDemo();
-                        setPanel(null);
-                        setToast("Data demo berhasil direset.");
-                      } catch (e) {
-                        setActionError((e as Error).message);
-                      }
-                    },
-                  })
-                }
-              >
-                <RotateCcw size={16} />
-                Reset data demo
-              </Button>
-              {!owner && <small>Reset hanya tersedia untuk Owner.</small>}
             </div>
           ) : (
             <Editor

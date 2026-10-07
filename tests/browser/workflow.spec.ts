@@ -1,4 +1,4 @@
-﻿import { test, expect, type Page } from "@playwright/test";
+﻿import { test, expect, type Page } from "./fixtures";
 
 const nav = (page: Page, name: string) =>
   page
@@ -103,7 +103,7 @@ test("customer → order → delivery → payment → fuel → report persists a
   expect(errors).toEqual([]);
 });
 
-test("transfer evidence, return approval, role simulation, and reset confirmation", async ({
+test("transfer evidence, return approval, and role simulation", async ({
   page,
 }) => {
   await page.goto("/");
@@ -148,35 +148,9 @@ test("transfer evidence, return approval, role simulation, and reset confirmatio
       .getByRole("navigation")
       .getByRole("button", { name: "Pembayaran", exact: true }),
   ).toHaveCount(0);
-  await page
-    .getByRole("button", { name: "Pengaturan demo", exact: true })
-    .click();
   await expect(
-    dialog(page).getByRole("button", { name: "Reset data demo" }),
-  ).toBeDisabled();
-  await dialog(page).getByRole("button", { name: "Tutup panel" }).click();
-  await page
-    .getByLabel("Simulasi peran", { exact: true })
-    .selectOption("Owner");
-  await page
-    .getByRole("button", { name: "Pengaturan demo", exact: true })
-    .click();
-  await dialog(page).getByRole("button", { name: "Reset data demo" }).click();
-  await page
-    .getByRole("dialog", { name: "Konfirmasi tindakan" })
-    .getByRole("button", { name: "Kembali" })
-    .click();
-  await expect(
-    page.getByRole("dialog", { name: "Pengaturan demo" }),
-  ).toBeVisible();
-  await dialog(page).getByRole("button", { name: "Reset data demo" }).click();
-  await page
-    .getByRole("dialog", { name: "Konfirmasi tindakan" })
-    .getByRole("button", { name: "Ya, lanjutkan" })
-    .click();
-  await expect(dialog(page)).toHaveCount(0);
-  await nav(page, "Retur");
-  await expect(page.getByRole("table")).toContainText("Diajukan");
+    page.getByRole("button", { name: "Pengaturan demo", exact: true }),
+  ).toHaveCount(0);
 });
 
 test("mobile and tablet navigation stays within viewport; forms and keyboard dismissal work", async ({
@@ -230,14 +204,14 @@ test("malformed saved data shows recoverable error instead of breaking the app",
   page,
 }) => {
   await page.addInitScript(() =>
-    localStorage.setItem("buahaha.demo.v1", "{broken"),
+    localStorage.setItem("buahaha.data.v2", "{broken"),
   );
   await page.goto("/");
   await expect(page.locator(".boot [role=alert]")).toContainText(
     "Data lokal tidak dapat dibaca",
   );
   page.on("dialog", (d) => d.accept());
-  await page.getByRole("button", { name: "Reset data demo" }).click();
+  await page.getByRole("button", { name: "Mulai dengan data kosong" }).click();
   await expect(
     page.getByRole("heading", { name: "Ringkasan usaha" }),
   ).toBeVisible();

@@ -1,20 +1,17 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { demoState } from "./demo";
-import { Command, execute, Role, State, stateSchema } from "./domain";
-import { HISTORY_BACKUP_KEY, migrateHistory } from "./history-migration";
+import { Command, execute, Role, State } from "./domain";
+import { DATA_KEY, emptyState, readStoredState } from "./storage-state";
 
-const key = "buahaha.demo.v1";
+const key = DATA_KEY;
 type Snapshot = { state: State | null; error: string };
 const server: Snapshot = { state: null, error: "" };
 let snapshot: Snapshot = server;
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
 function readState() {
-  const raw = localStorage.getItem(key);
-  const state = raw ? stateSchema.parse(JSON.parse(raw)) : demoState();
-  return migrateHistory(state, raw, localStorage, key);
+  return readStoredState(localStorage);
 }
 function load() {
   try {
@@ -26,7 +23,7 @@ function load() {
     snapshot = {
       state: null,
       error:
-        "Data lokal tidak dapat dibaca. Unduh salinan sebelum mereset, atau izinkan penyimpanan browser.",
+        "Data lokal tidak dapat dibaca. Unduh salinan sebelum memulai ulang, atau izinkan penyimpanan browser.",
     };
   }
 }
@@ -59,7 +56,7 @@ function persist(state: State) {
     localStorage.setItem(key, JSON.stringify(state));
   } catch {
     throw new Error(
-      "Penyimpanan lokal penuh atau diblokir. Perubahan belum disimpan. Gunakan bukti lebih kecil atau unduh cadangan dan reset demo.",
+      "Penyimpanan lokal penuh atau diblokir. Perubahan belum disimpan. Gunakan bukti lebih kecil atau izinkan penyimpanan browser.",
     );
   }
   snapshot = { state, error: "" };
@@ -71,7 +68,7 @@ export function dispatch(c: Command, role: Role) {
   if (!state) throw new Error("Data belum siap.");
   persist(execute(state, c, role));
 }
-export const resetDemo = () => persist(demoState());
+export const resetData = () => persist(emptyState());
 export function download(
   name: string,
   content: string,
@@ -90,15 +87,3 @@ export const backup = () =>
     localStorage.getItem(key) || JSON.stringify(snapshot.state),
     "application/json",
   );
-
-export const hasHistoryBackup = () =>
-  Boolean(localStorage.getItem(HISTORY_BACKUP_KEY));
-export function backupHistory() {
-  const raw = localStorage.getItem(HISTORY_BACKUP_KEY);
-  if (raw)
-    download(
-      "buahaha-sebelum-penyesuaian-tanggal.json",
-      raw,
-      "application/json",
-    );
-}

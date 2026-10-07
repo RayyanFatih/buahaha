@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+﻿import { test, expect } from "./fixtures";
 import { readFile, mkdir } from "node:fs/promises";
 import { demoState } from "../../src/lib/demo";
 
@@ -16,7 +16,7 @@ test("historical daily results, date navigation, range drilldown, and CSV agree"
     m.date = "2026-09-11";
   });
   await page.addInitScript(
-    (data) => localStorage.setItem("buahaha.demo.v1", JSON.stringify(data)),
+    (data) => localStorage.setItem("buahaha.data.v2", JSON.stringify(data)),
     seed,
   );
   await page.goto("/");
@@ -77,7 +77,7 @@ test("historical daily results, date navigation, range drilldown, and CSV agree"
   expect(csv).not.toContain("2026-09-11");
   expect(
     await page.evaluate(() =>
-      JSON.parse(localStorage.getItem("buahaha.demo.v1")!),
+      JSON.parse(localStorage.getItem("buahaha.data.v2")!),
     ),
   ).toEqual(seed);
   await page
