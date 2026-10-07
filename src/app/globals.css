@@ -2604,3 +2604,54 @@ td small {
     margin-left: 0;
   }
 }
+.shipping-picker {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  min-width: 0;
+}
+.shipping-picker summary {
+  padding: 14px 16px;
+  cursor: pointer;
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 13px;
+}
+.shipping-picker-body {
+  padding: 0 16px 16px;
+}
+.shipping-picker .order-choices {
+  max-height: 280px;
+  overflow-y: auto;
+  margin-top: 16px;
+}
+.shipping-picker .order-choices label {
+  align-items: flex-start;
+}
+.shipping-picker .order-choices label span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.shipping-picker input[type="checkbox"] {
+  margin-top: 3px;
+}
+.shipping-selected-order {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.shipping-selected-order > div {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.shipping-selection strong {
+  font-size: 13px;
+}
+.shipping-selected-order small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  line-height: 1.5;
+}

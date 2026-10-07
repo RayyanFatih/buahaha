@@ -358,6 +358,18 @@ export default function Dashboard() {
   const product = (id: string) => s.products.find((p) => p.id === id)!;
   const match = (...values: string[]) =>
     values.join(" ").toLowerCase().includes(search.toLowerCase());
+  const matchesTrip = (trip: (typeof s.trips)[number]) =>
+    match(
+      trip.id,
+      trip.driver,
+      trip.vehicle,
+      trip.address,
+      ...trip.orderIds.flatMap((id) => {
+        const order = s.orders.find((o) => o.id === id);
+        const person = order && customer(order.customerId);
+        return [id, person?.name || "", person?.address || ""];
+      }),
+    );
   const low = s.products.filter((p) => available(s, p) <= p.low);
   const active = s.orders.filter(
     (o) => !["selesai", "dibatalkan"].includes(o.status),
@@ -1100,7 +1112,7 @@ export default function Dashboard() {
             <div className="trip-list">
               {s.trips
                 .toReversed()
-                .filter((t) => match(t.id, t.driver, t.vehicle, t.address))
+                .filter(matchesTrip)
                 .map((t) => (
                   <section className="panel trip" key={t.id}>
                     <div className="trip-heading">
@@ -1185,9 +1197,7 @@ export default function Dashboard() {
                     </footer>
                   </section>
                 ))}
-              {!s.trips.some((t) =>
-                match(t.id, t.driver, t.vehicle, t.address),
-              ) && <Empty />}
+              {!s.trips.some(matchesTrip) && <Empty />}
             </div>
           )}
           {section === "Pembayaran" && (
@@ -2007,6 +2017,7 @@ function Editor({
   const [selectedOrders, setSelectedOrders] = useState<string[]>(
     panel.type === "trip" && panel.id ? [panel.id] : [],
   );
+  const [orderSearch, setOrderSearch] = useState("");
   const [proof, setProof] = useState<Evidence>();
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -2035,6 +2046,13 @@ function Editor({
       o.status === "disiapkan" &&
       !s.trips.some((t) => t.orderIds.includes(o.id)),
   );
+  const matchingOrders = eligibleTrips.filter((o) => {
+    const person = s.customers.find((c) => c.id === o.customerId)!;
+    return [o.id, person.name, person.address]
+      .join(" ")
+      .toLowerCase()
+      .includes(orderSearch.trim().toLowerCase());
+  });
   async function upload(file?: File) {
     setProof(undefined);
     if (!file) return;
@@ -2455,39 +2473,112 @@ function Editor({
       )}
       {panel.type === "trip" && (
         <>
-          <fieldset className="order-choices">
-            <legend>Pesanan siap dikirim</legend>
-            {eligibleTrips.map((o) => (
-              <label key={o.id}>
+          <p className="muted">
+            Pilih satu atau beberapa pesanan berstatus disiapkan yang belum
+            dijadwalkan. Periksa pelanggan dan alamat sebelum menyimpan.
+          </p>
+          <details className="shipping-picker">
+            <summary>Pilih pesanan · {selectedOrders.length} dipilih</summary>
+            <div className="shipping-picker-body">
+              <Field label="Cari pesanan siap kirim">
                 <input
-                  type="checkbox"
-                  checked={selectedOrders.includes(o.id)}
-                  onChange={(e) =>
-                    setSelectedOrders(
-                      e.target.checked
-                        ? [...selectedOrders, o.id]
-                        : selectedOrders.filter((id) => id !== o.id),
-                    )
-                  }
+                  type="search"
+                  value={orderSearch}
+                  onChange={(e) => setOrderSearch(e.target.value)}
+                  placeholder="Nomor pesanan, pelanggan, atau alamat"
                 />
-                <span>
-                  <strong>
-                    {o.id} ·{" "}
-                    {s.customers.find((c) => c.id === o.customerId)!.name}
-                  </strong>
-                  <small>
-                    {s.customers.find((c) => c.id === o.customerId)!.address}
-                  </small>
-                </span>
-              </label>
-            ))}
-            {!eligibleTrips.length && (
-              <p className="muted">
-                Belum ada pesanan siap kirim. Ubah status pesanan menjadi
-                disiapkan terlebih dahulu.
-              </p>
+              </Field>
+              <fieldset className="order-choices">
+                <legend>Pesanan siap dikirim</legend>
+                {matchingOrders.map((o) => (
+                  <label key={o.id}>
+                    <input
+                      type="checkbox"
+                      checked={selectedOrders.includes(o.id)}
+                      onChange={(e) =>
+                        setSelectedOrders(
+                          e.target.checked
+                            ? [...selectedOrders, o.id]
+                            : selectedOrders.filter((id) => id !== o.id),
+                        )
+                      }
+                    />
+                    <span>
+                      <strong>
+                        {o.id} ·{" "}
+                        {s.customers.find((c) => c.id === o.customerId)!.name}
+                      </strong>
+                      <small>
+                        {
+                          s.customers.find((c) => c.id === o.customerId)!
+                            .address
+                        }
+                      </small>
+                      <small>
+                        {dateLabel(o.date)} · {o.items.length} jenis buah ·{" "}
+                        {money(total(o))}
+                      </small>
+                    </span>
+                  </label>
+                ))}
+                {!eligibleTrips.length && (
+                  <p className="muted">
+                    Belum ada pesanan siap kirim. Ubah status pesanan menjadi
+                    disiapkan terlebih dahulu.
+                  </p>
+                )}
+                {eligibleTrips.length > 0 && !matchingOrders.length && (
+                  <p className="muted">
+                    Tidak ada pesanan yang cocok. Coba nomor, nama pelanggan,
+                    atau alamat lain.
+                  </p>
+                )}
+              </fieldset>
+            </div>
+          </details>
+          <div className="shipping-selection" aria-label="Pesanan yang dipilih">
+            <strong>{selectedOrders.length} pesanan dipilih</strong>
+            {!selectedOrders.length && (
+              <p className="muted">Belum ada pesanan dipilih.</p>
             )}
-          </fieldset>
+            {selectedOrders.map((id) => {
+              const order = s.orders.find((o) => o.id === id)!;
+              const person = s.customers.find(
+                (c) => c.id === order.customerId,
+              )!;
+              return (
+                <div className="shipping-selected-order" key={id}>
+                  <div>
+                    <strong>
+                      {id} · {person.name}
+                    </strong>
+                    <small>{person.address}</small>
+                    <small>
+                      {order.items
+                        .map(
+                          (item) =>
+                            `${s.products.find((p) => p.id === item.productId)?.name} (${quantity(item.qty)})`,
+                        )
+                        .join(", ")}
+                    </small>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    aria-label={`Hapus pilihan ${id}`}
+                    onClick={() =>
+                      setSelectedOrders(
+                        selectedOrders.filter((value) => value !== id),
+                      )
+                    }
+                  >
+                    Hapus
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
           <Field label="Petugas pengiriman">{input("person")}</Field>
           <Field label="Kendaraan / nomor polisi">{input("vehicle")}</Field>
           <Field label="Alamat atau rangkuman rute">{input("address")}</Field>

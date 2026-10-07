@@ -250,3 +250,5 @@ Panel kanan selebar 550px dengan batas maksimum lebar layar dan tinggi 100dvh. H
 - **Don't** memakai glow, glassmorphism, bayangan berat, atau gradient ungu/biru tanpa dasar identitas.
 - **Don't** menjadikan emoji sebagai ikon atau menambah foto buah tanpa kebutuhan pengenalan produk.
 - **Don't** mengambil ukuran teks lama yang tertimpa override CSS sebagai token sistem.
+
+Pilihan pesanan pada formulir pengiriman memakai dropdown yang dapat dibuka lewat keyboard, berisi pencarian nomor pesanan, pelanggan, atau alamat serta pilihan beberapa pesanan. Ringkasan pilihan tetap terlihat di luar dropdown untuk pemeriksaan sebelum menyimpan. Hanya pesanan disiapkan yang belum dijadwalkan tersedia untuk dipilih. Pencarian daftar pengiriman juga mencakup nomor pesanan dan pelanggan.
