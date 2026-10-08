@@ -43,6 +43,7 @@ export type Order = {
   discount: number;
   note: string;
   status: Status;
+  paymentMethod?: "Transfer" | "COD";
 };
 export type Evidence = { name: string; data: string; type: string };
 export type Payment = {
@@ -153,6 +154,7 @@ export const stateSchema = z.object({
       discount: num,
       note: z.string(),
       status: z.enum(statuses),
+      paymentMethod: z.enum(["Transfer", "COD"]).optional(),
     }),
   ),
   payments: z.array(
@@ -242,6 +244,14 @@ export const paid = (s: State, orderId: string) =>
   s.payments
     .filter((p) => p.orderId === orderId && p.verified)
     .reduce((a, p) => a + p.amount, 0);
+export const unrecordedAmount = (s: State, order: Order) =>
+  Math.max(
+    0,
+    total(order) -
+      s.payments
+        .filter((p) => p.orderId === order.id)
+        .reduce((n, p) => n + p.amount, 0),
+  );
 export const reserved = (s: State, productId: string) =>
   s.orders
     .filter((o) => ["baru", "dikonfirmasi", "disiapkan"].includes(o.status))
@@ -270,7 +280,7 @@ export type Command =
       note: string;
       date: string;
     }
-  | { type: "order"; value: Order }
+  | { type: "order"; value: Order; initialPayment?: Payment }
   | { type: "status"; id: string; status: Status }
   | { type: "trip"; value: Trip }
   | { type: "tripStatus"; id: string }
@@ -458,6 +468,10 @@ function transition(s: State, order: Order, status: Status) {
     );
     if (status === "dikirim") {
       requireThat(
+        order.paymentMethod !== "Transfer" || paid(s, order.id) >= total(order),
+        `Transfer ${order.id} harus lunas dan terverifikasi sebelum dikirim.`,
+      );
+      requireThat(
         s.trips.some((t) => t.orderIds.includes(order.id)),
         "Jadwalkan perjalanan pengiriman terlebih dahulu.",
       );
@@ -582,6 +596,20 @@ export function execute(
       "Diskon tidak boleh melebihi subtotal.",
     );
     s.orders.push(o);
+    if (c.initialPayment) {
+      requireThat(
+        role === "Owner",
+        "Pencatatan transfer hanya tersedia untuk Owner.",
+      );
+      requireThat(
+        o.paymentMethod === "Transfer" &&
+          c.initialPayment.method === "Transfer" &&
+          c.initialPayment.orderId === o.id &&
+          c.initialPayment.proof?.data,
+        "Transfer awal harus terkait pesanan ini dan dilengkapi bukti.",
+      );
+      return execute(s, { type: "payment", value: c.initialPayment }, role);
+    }
   }
   if (c.type === "status") {
     const o = s.orders.find((o) => o.id === c.id);
@@ -608,6 +636,11 @@ export function execute(
     requireThat(t && t.status !== "Terkirim", "Perjalanan sudah selesai.");
     t.orderIds.forEach((id) => {
       const o = s.orders.find((o) => o.id === id)!;
+      if (t.status === "Terjadwal")
+        requireThat(
+          o.paymentMethod !== "Transfer" || paid(s, o.id) >= total(o),
+          `Transfer ${o.id} harus lunas dan terverifikasi sebelum dikirim.`,
+        );
       const next = t.status === "Terjadwal" ? "dikirim" : "selesai";
       if (o.status !== next && o.status !== "selesai") transition(s, o, next);
     });
@@ -617,6 +650,18 @@ export function execute(
     const p = c.value;
     const o = s.orders.find((o) => o.id === p.orderId);
     requireThat(o && o.status !== "dibatalkan", "Pilih pesanan aktif.");
+    requireThat(
+      !s.payments.some((record) => record.id === p.id),
+      "Pembayaran ini sudah tercatat.",
+    );
+    requireThat(
+      !o.paymentMethod || p.method === o.paymentMethod,
+      "Metode pembayaran harus sesuai dengan pesanan.",
+    );
+    requireThat(
+      o.paymentMethod !== "COD" || o.status === "selesai",
+      "Catat penerimaan Cash/COD setelah barang diterima pelanggan.",
+    );
     const recorded = s.payments
       .filter((x) => x.orderId === o.id)
       .reduce((a, x) => a + x.amount, 0);

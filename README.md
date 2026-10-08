@@ -123,3 +123,11 @@ Untuk pengujian browser, siapkan Google Chrome dan jalankan server lokal di `htt
 
 - [Konteks produk](PRODUCT.md): kebutuhan dan cakupan buahaha.
 - [Panduan desain](DESIGN.md): aturan tampilan dan komponen antarmuka.
+
+## Pembayaran saat membuat pesanan
+
+Formulir Buat pesanan mewajibkan pilihan Transfer belum dibayar, Transfer sudah ditransfer, atau Cash/COD. Pilihan metode disimpan pada pesanan. Transfer sudah ditransfer membutuhkan nominal dan bukti; pesanan serta pembayaran disimpan bersama dan pembayaran tetap menunggu verifikasi Owner. Nominal boleh sebagian dan tidak boleh melebihi total pesanan.
+
+Menu Pembayaran menampilkan Tagihan pesanan dan Pembayaran tercatat. Tagihan dihitung dari nilai pesanan dikurangi semua pembayaran yang sudah dicatat, termasuk transfer menunggu verifikasi, untuk menghindari pencatatan ganda. Memilih Cash/COD tidak mencatat penerimaan uang; penerimaan baru dapat dicatat setelah barang diterima. Setoran pegawai tetap dicatat terpisah. Pesanan baru dengan metode Transfer hanya dapat dikirim setelah lunas dan terverifikasi. Data lama tanpa pilihan metode tetap dapat digunakan.
+
+Admin Gudang dapat memilih metode pembayaran saat membuat pesanan; pencatatan transfer awal dan verifikasi tetap dilakukan oleh Owner sesuai pembatasan peran saat ini.

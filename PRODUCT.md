@@ -140,3 +140,7 @@ Sediakan kondisi kosong, error, validasi form, konfirmasi tindakan berisiko, fee
 ## Data awal
 
 Aplikasi dimulai dari data kosong tanpa produk, pelanggan, stok, atau transaksi contoh. Pembaruan ini membersihkan data demo lama satu kali per browser dan mempertahankan seluruh data baru setelahnya. Menu Pengaturan demo dihapus. Data contoh dalam kode hanya dipakai sebagai fixture pengujian.
+
+## Pembayaran terintegrasi pada pesanan
+
+Pesanan baru mencatat metode Transfer atau Cash/COD. Owner dapat mencatat transfer awal beserta bukti pada formulir pesanan; simpan pesanan dan pembayaran bersifat atomik dan transfer menunggu verifikasi. Tagihan tanpa pembayaran tetap terlihat di menu Pembayaran. Transfer harus lunas terverifikasi sebelum pengiriman; penerimaan COD setelah pesanan selesai dan setoran pegawai dicatat terpisah. Admin Gudang dapat memilih metode tanpa mencatat penerimaan transfer. Perubahan ini mempertahankan data dan alur pembayaran lama yang belum memiliki metode pada pesanan.

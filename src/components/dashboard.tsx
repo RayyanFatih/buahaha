@@ -52,6 +52,7 @@ import {
   money,
   Order,
   paid,
+  unrecordedAmount,
   paymentStatus,
   Product,
   quantity,
@@ -1266,7 +1267,91 @@ export default function Dashboard() {
                   Menunggu verifikasi <strong>{pending.length} transfer</strong>
                 </span>
               </div>
-              <section className="panel transaction-table payments-table">
+              <section className="panel receivables-panel">
+                <div className="section-heading">
+                  <div>
+                    <h2>Tagihan pesanan</h2>
+                    <p>
+                      Metode dari formulir pesanan. Tagihan bukan uang yang
+                      sudah diterima.
+                    </p>
+                  </div>
+                </div>
+                <Table
+                  headings={[
+                    "Pesanan / pelanggan",
+                    "Metode",
+                    "Belum dicatat",
+                    "Tindak lanjut",
+                    "Tindakan",
+                  ]}
+                >
+                  {s.orders
+                    .toReversed()
+                    .filter(
+                      (o) =>
+                        o.status !== "dibatalkan" &&
+                        unrecordedAmount(s, o) > 0 &&
+                        match(o.id, customer(o.customerId).name) &&
+                        (filter === "Semua" ||
+                          filter === o.paymentMethod ||
+                          (filter === "Menunggu" &&
+                            o.paymentMethod === "Transfer")),
+                    )
+                    .map((o) => (
+                      <tr key={o.id}>
+                        <td>
+                          <button
+                            className="text-link"
+                            onClick={() => open("detail", o.id)}
+                          >
+                            {o.id}
+                          </button>
+                          <small>{customer(o.customerId).name}</small>
+                        </td>
+                        <td>
+                          {o.paymentMethod === "COD"
+                            ? "Cash/COD"
+                            : o.paymentMethod || "Belum dipilih"}
+                        </td>
+                        <td className="numeric">
+                          {money(unrecordedAmount(s, o))}
+                        </td>
+                        <td>
+                          {o.paymentMethod === "COD"
+                            ? o.status === "selesai"
+                              ? "Catat uang diterima pegawai"
+                              : "Dibayar saat barang diterima"
+                            : "Menunggu pembayaran"}
+                        </td>
+                        <td>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={
+                              o.paymentMethod === "COD" &&
+                              o.status !== "selesai"
+                            }
+                            onClick={() => open("payment", o.id)}
+                          >
+                            {o.paymentMethod === "COD"
+                              ? "Catat penerimaan COD"
+                              : "Catat transfer / pembayaran"}
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                </Table>
+              </section>
+              <section className="panel transaction-table payments-table spaced">
+                <div className="section-heading">
+                  <div>
+                    <h2>Pembayaran tercatat</h2>
+                    <p>
+                      Periksa transfer dan pantau setoran uang COD dari pegawai.
+                    </p>
+                  </div>
+                </div>
                 <Table
                   headings={[
                     "Pembayaran",
@@ -1316,7 +1401,7 @@ export default function Dashboard() {
                             }
                           </small>
                         </td>
-                        <td>{p.method}</td>
+                        <td>{p.method === "COD" ? "Cash/COD" : p.method}</td>
                         <td className="numeric">
                           {money(p.amount)}
                           {p.method === "COD" && (
@@ -1908,6 +1993,14 @@ function OrderDetail({
       <p className="muted">
         {dateLabel(o.date)} · {c.name}
       </p>
+      {o.paymentMethod && (
+        <p className="muted">
+          Pembayaran:{" "}
+          {o.paymentMethod === "COD"
+            ? "Cash/COD · dibayar saat barang diterima"
+            : "Transfer · verifikasi sebelum pengiriman"}
+        </p>
+      )}
       <div className="customer-detail">
         <strong>{c.name}</strong>
         <span>{c.phone}</span>
@@ -2057,7 +2150,11 @@ function Editor({
     productId:
       panel.type === "stock" ? panel.id || s.products[0]?.id || "" : "",
     kind: "Masuk",
-    method: "Transfer",
+    method:
+      (panel.type === "payment" &&
+        s.orders.find((o) => o.id === panel.id)?.paymentMethod) ||
+      "Transfer",
+    orderPayment: "",
     customerId: "",
     orderId: ["payment", "return"].includes(panel.type) ? panel.id || "" : "",
     category: "Bensin",
@@ -2068,7 +2165,17 @@ function Editor({
     refund: "0",
     discount: "0",
     qty: "",
-    amount: "",
+    amount:
+      panel.type === "payment" &&
+      panel.id &&
+      s.orders.some((o) => o.id === panel.id)
+        ? String(
+            unrecordedAmount(
+              s,
+              s.orders.find((o) => o.id === panel.id)!,
+            ),
+          )
+        : "",
   });
   const [items, setItems] = useState<
     { productId: string; qty: string; price: string }[]
@@ -2084,6 +2191,13 @@ function Editor({
   );
   const [orderSearch, setOrderSearch] = useState("");
   const [proof, setProof] = useState<Evidence>();
+  const initialTransfer =
+    panel.type === "order" && values.orderPayment === "transfer-paid";
+  const orderTotal =
+    items.reduce(
+      (sum, item) => sum + Number(item.qty) * Number(item.price),
+      0,
+    ) - Number(values.discount);
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
   const set = (key: string, value: string) =>
@@ -2149,16 +2263,20 @@ function Editor({
   const evidenceField = (
     <Field
       label={
-        panel.type === "return" || panel.type === "proof"
-          ? "Bukti foto / video (wajib)"
-          : "Bukti (opsional)"
+        initialTransfer
+          ? "Bukti transfer (wajib)"
+          : panel.type === "return" || panel.type === "proof"
+            ? "Bukti foto / video (wajib)"
+            : "Bukti (opsional)"
       }
       hint="JPG, PNG, WebP, MP4 · maksimal 750 KB. Hanya tersimpan di browser ini, bukan di server."
     >
       <input
         type="file"
         accept="image/png,image/jpeg,image/webp,video/mp4"
-        required={panel.type === "return" || panel.type === "proof"}
+        required={
+          initialTransfer || panel.type === "return" || panel.type === "proof"
+        }
         onChange={(e) => void upload(e.target.files?.[0])}
       />
       {proof && (
@@ -2177,6 +2295,11 @@ function Editor({
         onChange={(e) => {
           set("orderId", e.target.value);
           set("productId", "");
+          if (panel.type === "payment") {
+            const order = s.orders.find((o) => o.id === e.target.value);
+            set("method", order?.paymentMethod || "Transfer");
+            set("amount", order ? String(unrecordedAmount(s, order)) : "");
+          }
         }}
       >
         <option value="">Pilih pesanan</option>
@@ -2233,11 +2356,28 @@ function Editor({
           note: v.note,
           date: v.date,
         });
-      if (panel.type === "order")
+      if (panel.type === "order") {
+        if (!v.orderPayment) throw new Error("Pilih pembayaran pesanan.");
+        if (initialTransfer && !proof)
+          throw new Error("Unggah bukti transfer terlebih dahulu.");
+        const orderId = `PSN-${Math.max(1000, ...s.orders.map((o) => Number(o.id.replace("PSN-", "")) || 0)) + 1}`;
         submit({
           type: "order",
+          initialPayment: initialTransfer
+            ? {
+                id: uid("BYR"),
+                orderId,
+                date: v.date,
+                amount: num("amount"),
+                method: "Transfer",
+                verified: false,
+                deposited: 0,
+                proof,
+              }
+            : undefined,
           value: {
-            id: `PSN-${Math.max(1000, ...s.orders.map((o) => Number(o.id.replace("PSN-", "")) || 0)) + 1}`,
+            id: orderId,
+            paymentMethod: v.orderPayment === "COD" ? "COD" : "Transfer",
             date: v.date,
             customerId: v.customerId,
             items: items.map((i) => ({
@@ -2251,6 +2391,7 @@ function Editor({
             status: "baru",
           },
         });
+      }
       if (panel.type === "trip")
         submit({
           type: "trip",
@@ -2543,6 +2684,66 @@ function Editor({
           </div>
         </>
       )}
+      {panel.type === "order" && (
+        <section
+          className="order-payment-section"
+          aria-label="Pembayaran saat membuat pesanan"
+        >
+          <h3>Pembayaran</h3>
+          <Field label="Pembayaran pesanan">
+            <select
+              required
+              value={values.orderPayment}
+              onChange={(e) => {
+                set("orderPayment", e.target.value);
+                setProof(undefined);
+                if (e.target.value === "transfer-paid")
+                  set("amount", String(Math.max(0, orderTotal)));
+              }}
+            >
+              <option value="">Pilih pembayaran</option>
+              <option value="transfer-unpaid">Transfer — belum dibayar</option>
+              <option value="transfer-paid" disabled={role !== "Owner"}>
+                Transfer — sudah ditransfer
+              </option>
+              <option value="COD">
+                Cash/COD — dibayar saat barang diterima
+              </option>
+            </select>
+          </Field>
+          {initialTransfer && (
+            <>
+              <Field
+                label="Nominal transfer (Rp)"
+                hint="Boleh sebagian. Bukti transfer tetap perlu diverifikasi."
+              >
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  max={Math.max(0, orderTotal)}
+                  value={values.amount}
+                  onChange={(e) => set("amount", e.target.value)}
+                />
+              </Field>
+              {evidenceField}
+            </>
+          )}
+          <p className="muted">
+            {initialTransfer
+              ? "Pesanan dan transfer disimpan bersama. Periksa bukti di menu Pembayaran sebelum verifikasi dan pengiriman."
+              : values.orderPayment === "COD"
+                ? "Tagihan langsung muncul di menu Pembayaran. Catat uang diterima setelah barang sampai, lalu catat setoran pegawai secara terpisah."
+                : "Tagihan langsung muncul di menu Pembayaran. Transfer harus lunas dan terverifikasi sebelum barang dikirim."}
+          </p>
+          {role !== "Owner" && (
+            <p className="muted">
+              Admin Gudang dapat memilih metode; pencatatan dan verifikasi
+              transfer dilakukan oleh Owner.
+            </p>
+          )}
+        </section>
+      )}
       {panel.type === "trip" && (
         <>
           <p className="muted">
@@ -2684,6 +2885,7 @@ function Editor({
             <Field label="Metode pembayaran">
               <select
                 value={values.method}
+                disabled={Boolean(selectedOrder?.paymentMethod)}
                 onChange={(e) => set("method", e.target.value)}
               >
                 {["Transfer", "Tunai", "COD"].map((m) => (

@@ -46,6 +46,9 @@ test("customer → order → delivery → payment → fuel → report persists a
     .getByLabel("Pelanggan", { exact: true })
     .selectOption({ label: "Toko Uji Browser" });
   await dialog(page).getByLabel("Jumlah (kg)").fill("5");
+  await dialog(page)
+    .getByLabel("Pembayaran pesanan", { exact: true })
+    .selectOption("COD");
   await save(page);
   await page.getByRole("button", { name: "PSN-1007", exact: true }).click();
   await dialog(page)
@@ -83,7 +86,7 @@ test("customer → order → delivery → payment → fuel → report persists a
   await dialog(page)
     .getByLabel("Pesanan", { exact: true })
     .selectOption({ label: "PSN-1007 · Toko Uji Browser" });
-  await dialog(page).getByLabel("Metode pembayaran").selectOption("COD");
+  await expect(dialog(page).getByLabel("Metode pembayaran")).toHaveValue("COD");
   await dialog(page).getByLabel("Nominal diterima (Rp)").fill("125000");
   await save(page);
   const payment = page.getByRole("row").filter({ hasText: "Toko Uji Browser" });

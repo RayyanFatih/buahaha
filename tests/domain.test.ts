@@ -576,3 +576,91 @@ test("empty-start migration never removes old data if initializing new storage f
   assert.equal(saved.get("buahaha.demo.v1"), original);
   assert.equal(saved.has(DATA_KEY), false);
 });
+
+test("order and initial transfer save atomically, remain pending and block shipping until verified", () => {
+  const state = demoState();
+  const value: Order = { ...order(5), paymentMethod: "Transfer" };
+  const payment = {
+    ...state.payments[0],
+    id: "BYR-INITIAL",
+    orderId: value.id,
+    amount: 125000,
+  };
+  let result = execute(state, {
+    type: "order",
+    value,
+    initialPayment: payment,
+  });
+  assert.equal(result.orders.length, state.orders.length + 1);
+  assert.equal(result.payments.length, state.payments.length + 1);
+  assert.equal(result.payments.at(-1)!.verified, false);
+  assert.equal(paid(result, value.id), 0);
+  assert.throws(() => ship(result, value.id), /terverifikasi/);
+  result = execute(result, { type: "verify", id: payment.id });
+  assert.equal(paid(result, value.id), 125000);
+  assert.equal(ship(result, value.id).orders.at(-1)!.status, "dikirim");
+  const snapshot = structuredClone(state);
+  assert.throws(
+    () =>
+      execute(state, {
+        type: "order",
+        value,
+        initialPayment: { ...payment, amount: 125001 },
+      }),
+    /melebihi/,
+  );
+  assert.throws(
+    () =>
+      execute(state, {
+        type: "order",
+        value,
+        initialPayment: { ...payment, proof: undefined },
+      }),
+    /bukti/,
+  );
+  assert.throws(
+    () =>
+      execute(
+        state,
+        { type: "order", value, initialPayment: payment },
+        "Admin Gudang",
+      ),
+    /Owner/,
+  );
+  assert.deepEqual(state, snapshot);
+});
+
+test("payment intents create no receipt; COD is only received after delivery and deposit stays separate", () => {
+  const state = demoState();
+  for (const paymentMethod of ["Transfer", "COD"] as const) {
+    const result = execute(state, {
+      type: "order",
+      value: { ...order(5), paymentMethod },
+    });
+    assert.equal(result.payments.length, state.payments.length);
+    assert.equal(paid(result, "PSN-TEST"), 0);
+  }
+  let result = execute(state, {
+    type: "order",
+    value: { ...order(5), paymentMethod: "COD" },
+  });
+  const payment = {
+    ...state.payments[1],
+    id: "BYR-NEW-COD",
+    orderId: "PSN-TEST",
+    amount: 125000,
+  };
+  assert.throws(
+    () => execute(result, { type: "payment", value: payment }),
+    /barang diterima/,
+  );
+  result = ship(result, "PSN-TEST");
+  result = execute(result, { type: "tripStatus", id: "trip-test" });
+  result = execute(result, { type: "payment", value: payment });
+  assert.equal(paid(result, "PSN-TEST"), 125000);
+  assert.equal(result.payments.at(-1)!.deposited, 0);
+  assert.throws(
+    () => execute(result, { type: "payment", value: payment }),
+    /sudah tercatat/,
+  );
+});
