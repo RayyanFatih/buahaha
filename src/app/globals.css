@@ -1182,6 +1182,33 @@ input[type="checkbox"] {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 22px;
 }
+.shipping-queue {
+  margin-bottom: 28px;
+}
+.shipping-queue table {
+  min-width: 860px;
+  table-layout: fixed;
+}
+.shipping-queue th:nth-child(1) {
+  width: 29%;
+}
+.shipping-queue th:nth-child(2) {
+  width: 29%;
+}
+.shipping-queue th:nth-child(3) {
+  width: 26%;
+}
+.shipping-queue th:nth-child(4) {
+  width: 16%;
+}
+.shipping-queue .cell-main {
+  display: block;
+  margin-top: 6px;
+}
+.shipping-queue-empty {
+  padding: 0 24px 24px;
+  color: var(--muted);
+}
 .trip {
   padding: 23px;
 }

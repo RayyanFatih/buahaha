@@ -240,6 +240,12 @@ export const dateLabel = (d: string) =>
   }).format(new Date(d + "T12:00:00"));
 export const total = (o: Order) =>
   o.items.reduce((a, i) => a + i.qty * i.price, 0) - o.discount;
+export const ordersReadyForShipping = (s: State) =>
+  s.orders.filter(
+    (o) =>
+      o.status === "disiapkan" &&
+      !s.trips.some((t) => t.orderIds.includes(o.id)),
+  );
 export const paid = (s: State, orderId: string) =>
   s.payments
     .filter((p) => p.orderId === orderId && p.verified)

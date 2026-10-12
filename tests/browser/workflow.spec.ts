@@ -58,16 +58,32 @@ test("customer → order → delivery → payment → fuel → report persists a
     .getByRole("button", { name: "Siapkan pesanan", exact: true })
     .click();
   await dialog(page)
-    .getByRole("button", { name: "Jadwalkan pengiriman", exact: true })
+    .getByRole("button", { name: "Tutup panel", exact: true })
     .click();
+  await nav(page, "Pengiriman");
+  const queue = page.getByRole("region", { name: "Pesanan siap dikirim" });
+  await expect(queue).toContainText("Toko Uji Browser");
+  await queue
+    .getByRole("button", { name: "Jadwalkan PSN-1007", exact: true })
+    .click();
+  await expect(dialog(page).locator(".shipping-selection")).toContainText(
+    "PSN-1007",
+  );
+  await expect(
+    dialog(page).getByLabel("Alamat atau rangkuman rute"),
+  ).toHaveValue("Jl. Uji No. 12, Jakarta");
   await dialog(page).getByLabel("Petugas pengiriman").fill("Pak Uji");
   await dialog(page).getByLabel("Kendaraan / nomor polisi").fill("B 1234 UJI");
   await dialog(page)
     .getByLabel("Alamat atau rangkuman rute")
     .fill("Jl. Uji No. 12, Jakarta");
   await save(page);
+  await expect(queue).not.toContainText("PSN-1007");
+  await page.reload();
   await nav(page, "Pengiriman");
+  await expect(queue).not.toContainText("PSN-1007");
   const trip = page.locator(".trip").filter({ hasText: "Pak Uji" });
+  await expect(trip).toHaveCount(1);
   await trip.getByRole("button", { name: "Mulai perjalanan" }).click();
   await dialog(page).getByRole("button", { name: "Ya, lanjutkan" }).click();
   await trip.getByRole("button", { name: "Tandai terkirim" }).click();

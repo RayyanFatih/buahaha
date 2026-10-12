@@ -124,6 +124,10 @@ Untuk pengujian browser, siapkan Google Chrome dan jalankan server lokal di `htt
 - [Konteks produk](PRODUCT.md): kebutuhan dan cakupan buahaha.
 - [Panduan desain](DESIGN.md): aturan tampilan dan komponen antarmuka.
 
+## Pesanan siap dikirim
+
+Di menu Pengiriman, bagian **Pesanan siap dikirim** otomatis menampilkan pesanan berstatus Disiapkan yang belum masuk perjalanan. Cari berdasarkan nomor pesanan, pelanggan, atau alamat, lalu klik **Jadwalkan**. Pesanan dan alamat sudah terisi; lengkapi petugas, kendaraan, dan tanggal. Setelah disimpan, pesanan berpindah dari antrean ke Daftar perjalanan. Menghapus jadwal mengembalikannya ke antrean. Transfer harus lunas dan terverifikasi sebelum perjalanan dimulai.
+
 ## Pembayaran saat membuat pesanan
 
 Formulir Buat pesanan mewajibkan pilihan Transfer belum dibayar, Transfer sudah ditransfer, atau Cash/COD. Pilihan metode disimpan pada pesanan. Transfer sudah ditransfer membutuhkan nominal dan bukti; pesanan serta pembayaran disimpan bersama dan pembayaran tetap menunggu verifikasi Owner. Nominal boleh sebagian dan tidak boleh melebihi total pesanan.

@@ -51,6 +51,7 @@ import {
   Item,
   money,
   Order,
+  ordersReadyForShipping,
   paid,
   unrecordedAmount,
   paymentStatus,
@@ -413,6 +414,11 @@ export default function Dashboard() {
         return [id, person?.name || "", person?.address || ""];
       }),
     );
+  const shippingQueue = ordersReadyForShipping(s);
+  const matchingShippingOrders = shippingQueue.filter((o) => {
+    const person = customer(o.customerId);
+    return match(o.id, person.name, person.address);
+  });
   const low = s.products.filter((p) => available(s, p) <= p.low);
   const active = s.orders.filter(
     (o) => !["selesai", "dibatalkan"].includes(o.status),
@@ -1162,97 +1168,185 @@ export default function Dashboard() {
             </section>
           )}
           {section === "Pengiriman" && (
-            <div className="trip-list">
-              {s.trips
-                .toReversed()
-                .filter(matchesTrip)
-                .map((t) => (
-                  <section className="panel trip" key={t.id}>
-                    <div className="trip-heading">
-                      <div className="trip-icon">
-                        <Truck size={23} />
+            <>
+              <section
+                className="panel shipping-queue"
+                aria-label="Pesanan siap dikirim"
+              >
+                <div className="section-heading">
+                  <div>
+                    <h2>Pesanan siap dikirim</h2>
+                    <p>
+                      {shippingQueue.length} pesanan disiapkan dan belum masuk
+                      jadwal pengiriman.
+                    </p>
+                  </div>
+                </div>
+                {matchingShippingOrders.length ? (
+                  <Table
+                    headings={[
+                      "Pesanan / pelanggan",
+                      "Alamat pengiriman",
+                      "Pembayaran",
+                      "Tindakan",
+                    ]}
+                  >
+                    {matchingShippingOrders.map((o) => (
+                      <tr key={o.id}>
+                        <td>
+                          <button
+                            className="text-link"
+                            onClick={() => open("detail", o.id)}
+                          >
+                            {o.id}
+                          </button>
+                          <strong className="cell-main">
+                            {customer(o.customerId).name}
+                          </strong>
+                          <small>
+                            {dateLabel(o.date)} · {money(total(o))}
+                          </small>
+                        </td>
+                        <td className="wrap-cell">
+                          {customer(o.customerId).address}
+                        </td>
+                        <td className="wrap-cell">
+                          <strong>
+                            {o.paymentMethod || "Belum ditentukan"}
+                          </strong>
+                          <small>
+                            {paid(s, o.id) >= total(o)
+                              ? "Lunas"
+                              : o.paymentMethod === "COD"
+                                ? "Dibayar saat barang diterima"
+                                : o.paymentMethod === "Transfer"
+                                  ? "Transfer harus lunas dan terverifikasi sebelum perjalanan dimulai"
+                                  : paymentStatus(s, o)}
+                          </small>
+                        </td>
+                        <td>
+                          <Button
+                            size="sm"
+                            aria-label={`Jadwalkan ${o.id}`}
+                            onClick={() => open("trip", o.id)}
+                          >
+                            Jadwalkan{" "}
+                            <ArrowRight size={15} aria-hidden="true" />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </Table>
+                ) : (
+                  <p className="shipping-queue-empty">
+                    {shippingQueue.length
+                      ? "Tidak ada pesanan siap dikirim yang cocok dengan pencarian."
+                      : "Belum ada pesanan yang menunggu penjadwalan. Pesanan berstatus Disiapkan akan muncul otomatis di sini."}
+                  </p>
+                )}
+              </section>
+              <div className="section-heading">
+                <div>
+                  <h2>Daftar perjalanan</h2>
+                  <p>
+                    Pengiriman yang sudah dijadwalkan, sedang berjalan, dan
+                    selesai.
+                  </p>
+                </div>
+              </div>
+              <div className="trip-list">
+                {s.trips
+                  .toReversed()
+                  .filter(matchesTrip)
+                  .map((t) => (
+                    <section className="panel trip" key={t.id}>
+                      <div className="trip-heading">
+                        <div className="trip-icon">
+                          <Truck size={23} />
+                        </div>
+                        <div>
+                          <h2>{t.id}</h2>
+                          <p>
+                            {dateLabel(t.date)} · {t.vehicle}
+                          </p>
+                        </div>
+                        <Badge>{t.status}</Badge>
                       </div>
-                      <div>
-                        <h2>{t.id}</h2>
-                        <p>
-                          {dateLabel(t.date)} · {t.vehicle}
-                        </p>
+                      <div className="trip-body">
+                        <div>
+                          <span>Petugas</span>
+                          <strong>{t.driver}</strong>
+                        </div>
+                        <div>
+                          <span>Tujuan / rute</span>
+                          <strong>{t.address}</strong>
+                        </div>
+                        <div>
+                          <span>Bensin perjalanan</span>
+                          <strong>
+                            {money(
+                              s.expenses
+                                .filter(
+                                  (e) =>
+                                    e.tripId === t.id &&
+                                    e.category === "Bensin",
+                                )
+                                .reduce((a, e) => a + e.amount, 0),
+                            )}
+                          </strong>
+                        </div>
                       </div>
-                      <Badge>{t.status}</Badge>
-                    </div>
-                    <div className="trip-body">
-                      <div>
-                        <span>Petugas</span>
-                        <strong>{t.driver}</strong>
+                      <div className="trip-orders">
+                        {t.orderIds.map((id) => (
+                          <button
+                            key={id}
+                            className="text-link"
+                            onClick={() => open("detail", id)}
+                          >
+                            {id} <ArrowUpRight size={12} />
+                          </button>
+                        ))}
                       </div>
-                      <div>
-                        <span>Tujuan / rute</span>
-                        <strong>{t.address}</strong>
-                      </div>
-                      <div>
-                        <span>Bensin perjalanan</span>
-                        <strong>
-                          {money(
-                            s.expenses
-                              .filter(
-                                (e) =>
-                                  e.tripId === t.id && e.category === "Bensin",
-                              )
-                              .reduce((a, e) => a + e.amount, 0),
-                          )}
-                        </strong>
-                      </div>
-                    </div>
-                    <div className="trip-orders">
-                      {t.orderIds.map((id) => (
-                        <button
-                          key={id}
-                          className="text-link"
-                          onClick={() => open("detail", id)}
-                        >
-                          {id} <ArrowUpRight size={12} />
-                        </button>
-                      ))}
-                    </div>
-                    {t.note && <p className="trip-note">{t.note}</p>}
-                    <footer>
-                      {deleteButton("trips", t.id)}
-                      {owner && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => open("expense", t.id)}
-                        >
-                          <Fuel size={15} />
-                          Catat bensin
-                        </Button>
-                      )}
-                      {t.status !== "Terkirim" && (
-                        <Button
-                          size="sm"
-                          onClick={() =>
-                            setConfirmation({
-                              title:
-                                t.status === "Terjadwal"
-                                  ? "Mulai perjalanan dan keluarkan stok semua pesanan terkait?"
-                                  : "Tandai perjalanan terkirim dan selesaikan pesanan terkait?",
-                              action: () => {
-                                act({ type: "tripStatus", id: t.id });
-                              },
-                            })
-                          }
-                        >
-                          {t.status === "Terjadwal"
-                            ? "Mulai perjalanan"
-                            : "Tandai terkirim"}
-                          <ArrowRight size={15} />
-                        </Button>
-                      )}
-                    </footer>
-                  </section>
-                ))}
-              {!s.trips.some(matchesTrip) && <Empty />}
-            </div>
+                      {t.note && <p className="trip-note">{t.note}</p>}
+                      <footer>
+                        {deleteButton("trips", t.id)}
+                        {owner && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => open("expense", t.id)}
+                          >
+                            <Fuel size={15} />
+                            Catat bensin
+                          </Button>
+                        )}
+                        {t.status !== "Terkirim" && (
+                          <Button
+                            size="sm"
+                            onClick={() =>
+                              setConfirmation({
+                                title:
+                                  t.status === "Terjadwal"
+                                    ? "Mulai perjalanan dan keluarkan stok semua pesanan terkait?"
+                                    : "Tandai perjalanan terkirim dan selesaikan pesanan terkait?",
+                                action: () => {
+                                  act({ type: "tripStatus", id: t.id });
+                                },
+                              })
+                            }
+                          >
+                            {t.status === "Terjadwal"
+                              ? "Mulai perjalanan"
+                              : "Tandai terkirim"}
+                            <ArrowRight size={15} />
+                          </Button>
+                        )}
+                      </footer>
+                    </section>
+                  ))}
+                {!s.trips.some(matchesTrip) && <Empty />}
+              </div>
+            </>
           )}
           {section === "Pembayaran" && (
             <>
@@ -2140,7 +2234,14 @@ function Editor({
     date: today(),
     name: existingCustomer?.name || existingProduct?.name || "",
     phone: existingCustomer?.phone || "",
-    address: existingCustomer?.address || "",
+    address:
+      existingCustomer?.address ||
+      (panel.type === "trip"
+        ? s.customers.find(
+            (c) => c.id === s.orders.find((o) => o.id === panel.id)?.customerId,
+          )?.address
+        : "") ||
+      "",
     note: existingCustomer?.note || "",
     sku: existingProduct?.sku || "",
     unit: existingProduct?.unit || "kg",
@@ -2220,11 +2321,7 @@ function Editor({
   );
   const selectedOrder = s.orders.find((o) => o.id === values.orderId);
   const selectedProduct = s.products.find((p) => p.id === values.productId);
-  const eligibleTrips = s.orders.filter(
-    (o) =>
-      o.status === "disiapkan" &&
-      !s.trips.some((t) => t.orderIds.includes(o.id)),
-  );
+  const eligibleTrips = ordersReadyForShipping(s);
   const matchingOrders = eligibleTrips.filter((o) => {
     const person = s.customers.find((c) => c.id === o.customerId)!;
     return [o.id, person.name, person.address]
