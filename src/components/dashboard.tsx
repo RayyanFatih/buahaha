@@ -35,12 +35,14 @@ import {
   ShoppingBasket,
   Truck,
   Trash2,
+  TrendingUp,
   Users,
   Wallet,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PeriodFilter, type PeriodMode } from "@/components/period-filter";
+import { ForecastPanel } from "@/components/forecast-panel";
 import {
   available,
   Command,
@@ -79,6 +81,7 @@ const navigation = [
   { label: "Pengeluaran", icon: ReceiptText },
   { label: "Retur", icon: RotateCcw },
   { label: "Laporan", icon: ClipboardList },
+  { label: "Prediksi Usaha", icon: TrendingUp },
 ];
 type Panel = { type: string; id?: string } | null;
 const titles: Record<string, string> = {
@@ -105,6 +108,7 @@ const descriptions: Record<string, string> = {
   Pengeluaran: "Setiap biaya tercatat, setiap perjalanan terukur.",
   Retur: "Periksa kondisi buah dan selesaikan pengembalian.",
   Laporan: "Pahami hasil usaha dari transaksi yang tercatat.",
+  "Prediksi Usaha": "Baca pola penjualan, siapkan stok untuk hari mendatang.",
 };
 function Badge({ children }: { children: ReactNode }) {
   const label = String(children);
@@ -909,7 +913,7 @@ export default function Dashboard() {
               </div>
             </>
           )}
-          {!["Ringkasan", "Laporan"].includes(section) && (
+          {!["Ringkasan", "Laporan", "Prediksi Usaha"].includes(section) && (
             <div className="list-toolbar">
               <div className="search-box">
                 <Search size={17} />
@@ -964,6 +968,7 @@ export default function Dashboard() {
               )}
             </div>
           )}
+          {section === "Prediksi Usaha" && <ForecastPanel />}
           {section === "Pesanan" && (
             <section className="panel orders-list">
               {orders.length ? (

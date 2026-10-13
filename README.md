@@ -135,3 +135,17 @@ Formulir Buat pesanan mewajibkan pilihan Transfer belum dibayar, Transfer sudah 
 Menu Pembayaran menampilkan Tagihan pesanan dan Pembayaran tercatat. Tagihan dihitung dari nilai pesanan dikurangi semua pembayaran yang sudah dicatat, termasuk transfer menunggu verifikasi, untuk menghindari pencatatan ganda. Memilih Cash/COD tidak mencatat penerimaan uang; penerimaan baru dapat dicatat setelah barang diterima. Setoran pegawai tetap dicatat terpisah. Pesanan baru dengan metode Transfer hanya dapat dikirim setelah lunas dan terverifikasi. Data lama tanpa pilihan metode tetap dapat digunakan.
 
 Admin Gudang dapat memilih metode pembayaran saat membuat pesanan; pencatatan transfer awal dan verifikasi tetap dilakukan oleh Owner sesuai pembatasan peran saat ini.
+
+## Prediksi Usaha
+
+Menu Prediksi Usaha menerima CSV riwayat penjualan harian, lalu menghitung prediksi 7 atau 30 hari langsung di browser. Buka menu, pilih **Unggah riwayat CSV**, lalu pilih periode. CSV dummy buahaha yang berisi delapan buah dapat langsung digunakan. Tersedia contoh CSV 90 hari, pencarian SKU, grafik per buah, rincian harian, unduh hasil JSON, dan penghapusan khusus riwayat prediksi.
+
+Kolom wajib: `tanggal,sku,nama_buah,jumlah_terjual_kg`. Tambahkan `stok_akhir_kg` agar perkiraan stok tersedia. Kolom opsional `satuan` harus `kg`; `jenis_data=sintetis` menandai data simulasi. Tanggal memakai YYYY-MM-DD dan desimal memakai titik tanpa pemisah ribuan. Maksimal 5 MB, 100.000 baris dan 100 SKU. Setiap SKU membutuhkan minimal 90 hari berurutan dengan tanggal akhir yang sama. Hari tanpa penjualan harus dicatat nol; duplikasi dan tanggal hilang ditolak. Excel, PDF, rekap kas tanpa jumlah barang, dan JSON hasil Colab bukan format unggahan riwayat ini.
+
+Mesin lokal membandingkan regresi ridge autoregresif dengan rata-rata empat minggu terakhir untuk hari yang sama. Regresi memakai penjualan 1, 7, dan 14 hari sebelumnya, rata-rata 7/28 hari, serta siklus hari dalam minggu; penalti ridge 10, fitur distandardisasi dari data latih. Prediksi multi-hari menggunakan hasil prediksi sebelumnya secara rekursif. Uji historis terakhir sepanjang horizon dipisahkan dari pelatihan, tanpa memakai data masa depan sebagai fitur. Metode dengan MAE lebih rendah dipilih per SKU/horizon lalu dilatih ulang pada seluruh riwayat. MAE yang ditampilkan berasal dari periode pemilihan metode, bukan pengujian independen; WAPE bukan persentase akurasi. Ini model berbeda dari gradient boosting pada notebook Colab, tanpa interval prediksi terkalibrasi.
+
+Tanggal prediksi dimulai sehari setelah tanggal terakhir CSV. Riwayat lama diberi pemberitahuan; tanggal masa depan ditolak. Stok memakai saldo akhir CSV, bukan saldo operasional aplikasi. Simulasi tidak memasukkan pengadaan mendatang, pesanan terikat, retur, kerusakan baru, atau jadwal tutup khusus. Data sintetis dan penjualan yang terbatasi stok belum cukup untuk rekomendasi pembelian nyata.
+
+Perhitungan berjalan melalui Web Worker. Riwayat disimpan terpisah pada `buahaha.forecast.history.v1`; transaksi `buahaha.data.v2` tidak diubah. Unggahan tidak dikirim ke server dan belum tersinkron antarperangkat. Kegagalan validasi mempertahankan hasil sebelumnya; kegagalan penyimpanan diberitahukan. Model dan hasil dapat dihitung kembali setelah refresh. Notebook Colab tetap tersedia terpisah di `notebooks/buahaha_prediksi_colab.ipynb`.
+
+Pengujian browser dapat diarahkan ke server lain melalui variabel `PLAYWRIGHT_BASE_URL`; nilai bawaan tetap `http://127.0.0.1:3000`.

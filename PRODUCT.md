@@ -144,3 +144,7 @@ Aplikasi dimulai dari data kosong tanpa produk, pelanggan, stok, atau transaksi 
 ## Pembayaran terintegrasi pada pesanan
 
 Pesanan baru mencatat metode Transfer atau Cash/COD. Owner dapat mencatat transfer awal beserta bukti pada formulir pesanan; simpan pesanan dan pembayaran bersifat atomik dan transfer menunggu verifikasi. Tagihan tanpa pembayaran tetap terlihat di menu Pembayaran. Transfer harus lunas terverifikasi sebelum pengiriman; penerimaan COD setelah pesanan selesai dan setoran pegawai dicatat terpisah. Admin Gudang dapat memilih metode tanpa mencatat penerimaan transfer. Perubahan ini mempertahankan data dan alur pembayaran lama yang belum memiliki metode pada pesanan.
+
+## Prediksi Usaha
+
+Pengguna mengunggah CSV penjualan harian per SKU untuk menghitung penjualan 7/30 hari dan kecukupan stok akhir CSV. Perhitungan dan penyimpanan berjalan lokal, terpisah dari transaksi. Input minimal 90 hari lengkap per SKU dalam kg; riwayat kas tanpa kuantitas barang belum didukung. Model regresi ridge dibandingkan dengan pola mingguan pada uji historis sesuai horizon. Hasil menampilkan periode, metode, MAE, WAPE, status simulasi, asumsi stok, dan peringatan data lama. Tidak ada klaim akurasi usaha nyata, prediksi laba, integrasi stok operasional, atau layanan model Colab otomatis pada versi ini.
